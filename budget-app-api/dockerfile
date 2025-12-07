@@ -1,0 +1,52 @@
+# --------------------------------------------------------------------
+# 1. On part d'une image officielle PHP avec FPM (FastCGI Process Manager)
+#    C’est PHP optimisé pour les serveurs web (comme Nginx).
+# --------------------------------------------------------------------
+FROM php:8.2-fpm
+
+# --------------------------------------------------------------------
+# 2. On met à jour le système Debian interne et on installe des paquets nécessaires
+#    - git, unzip : utiles pour Composer
+#    - libicu-dev : utile pour Intl (formatage dates, nombres)
+#    - libpq-dev : driver PostgreSQL si besoin
+# --------------------------------------------------------------------
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libicu-dev \
+    libpq-dev
+
+# --------------------------------------------------------------------
+# 3. On active les extensions PHP utiles pour Symfony
+#    pdo_pgsql = driver PostgreSQL
+#    intl = gestion des dates, formatage
+# --------------------------------------------------------------------
+RUN docker-php-ext-install pdo pdo_pgsql intl
+
+# --------------------------------------------------------------------
+# 4. Installer Composer en copiant l'exécutable depuis l'image officielle Composer
+# --------------------------------------------------------------------
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+# --------------------------------------------------------------------
+# 5. Définir le dossier de travail
+#    Toutes les commandes suivantes seront exécutées dans /var/www
+# --------------------------------------------------------------------
+WORKDIR /var/www
+
+# --------------------------------------------------------------------
+# 6. Copier tout le projet Symfony dans le conteneur
+# --------------------------------------------------------------------
+COPY . .
+
+# --------------------------------------------------------------------
+# 7. Installer les dépendances Symfony
+#    --no-interaction = pas de questions pendant l'exécution
+#    --prefer-dist = téléchargement plus rapide
+# --------------------------------------------------------------------
+RUN composer install --no-interaction --prefer-dist
+
+# --------------------------------------------------------------------
+# 8. Lancer PHP-FPM (processus qui exécute PHP dans Docker)
+# --------------------------------------------------------------------
+CMD ["php-fpm"]
