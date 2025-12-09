@@ -1,33 +1,55 @@
 # ============================================
-# ENVIRONNEMENT
+# GIT
 # ============================================
-.env
-.env.local
-.env.*.local
+.git/
+.gitignore
+.gitattributes
 
 # ============================================
-# DÉPENDANCES PHP/COMPOSER
+# ENVIRONNEMENT ET SECRETS
 # ============================================
-/vendor/
+.env
+.env.dev
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# ============================================
+# DÉPENDANCES (réinstallées par composer install)
+# ============================================
+vendor/
 
 # ============================================
 # SYMFONY - Caches et logs
 # ============================================
-/var/
-!/var/cache/.gitkeep
-!/var/log/.gitkeep
-
-# ============================================
-# SYMFONY - Build publics
-# ============================================
-/public/bundles/
-/public/build/
+var/cache/
+var/log/
+var/sessions/
 
 # ============================================
 # TESTS
 # ============================================
+tests/
+phpunit.xml
+phpunit.xml.dist
 .phpunit.result.cache
-/phpunit.xml
+
+# ============================================
+# DOCUMENTATION
+# ============================================
+*.md
+README.md
+docs/
+
+# ============================================
+# DOCKER (pas besoin dans l'image)
+# ============================================
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+docker-compose*.yaml
+.dockerignore
 
 # ============================================
 # IDE
@@ -35,9 +57,16 @@
 .vscode/
 .idea/
 *.swp
+*.swo
 
 # ============================================
 # OS
 # ============================================
 .DS_Store
 Thumbs.db
+
+# ============================================
+# CI/CD
+# ============================================
+.github/
+.gitlab-ci.yml

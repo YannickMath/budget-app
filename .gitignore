@@ -1,11 +1,20 @@
-### Ignore environment variable files
-
+# ===========================================
+# ENV - Fichiers d'environnement
+# ===========================================
 /.env
 /.env.local
 
-### Ignore documentation files
+# ===========================================
+# SYMFONY - Fichiers et dossiers générés par Symfony
+# ===========================================
 docs/
 
-### Ignore database files
+# ===========================================
+# DOCKER - Data de la base de données
+# ===========================================
 /db_data/
 
+# ============================================
+# DOCKER - Overrides locaux
+# ============================================
+docker-compose.override.yml
