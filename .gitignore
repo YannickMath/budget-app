@@ -5,3 +5,7 @@
 
 ### Ignore documentation files
 docs/
+
+### Ignore database files
+/db_data/
+

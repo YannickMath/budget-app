@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # service API
+  api:
+    build: ./budget-app-api
+    ports:
+      - "8000:80"
+    environment:
+      - DB_HOST=db
+    depends_on:
+      - db
+    volumes:
+      - ./budget-app-api:/var/www
+    networks:
+      - budget-network
+
+  # service frontend
+
+  # service database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-budget_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - budget-network
+
+volumes:
+  db_data:
+
+networks:
+  budget-network:
