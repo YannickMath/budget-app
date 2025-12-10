@@ -42,3 +42,12 @@
 # ============================================
 .DS_Store
 Thumbs.db
+###> phpstan/phpstan ###
+phpstan-baseline.neon
+/.phpstan.cache  
+###< phpstan/phpstan ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.cache
+.php_cs.cache
+###< friendsofphp/php-cs-fixer ###
