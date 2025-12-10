@@ -5,6 +5,7 @@ A personal budget management application to track income, expenses, and financia
 ## What I'm Building
 
 A full-stack budget management application with:
+
 - **Backend API**: Symfony 7.4 with API Platform for RESTful endpoints
 - **Frontend**: Modern JavaScript framework (to be decided)
 - **Database**: PostgreSQL for data persistence
@@ -13,6 +14,7 @@ A full-stack budget management application with:
 ## What I'm Doing
 
 Setting up the project architecture and development environment:
+
 - Configured Docker containers for all services
 - Set up Symfony API with API Platform
 - Added code quality tools (PHPStan, PHP CS Fixer)
@@ -22,6 +24,7 @@ Setting up the project architecture and development environment:
 ## Tech Stack
 
 ### Backend
+
 - PHP 8.2+
 - Symfony 7.4
 - API Platform 4.2
@@ -29,9 +32,11 @@ Setting up the project architecture and development environment:
 - PostgreSQL 15
 
 ### Frontend
+
 - To be determined
 
 ### Development Tools
+
 - Docker & Docker Compose
 - PHPStan (static analysis)
 - PHP CS Fixer (code style)
@@ -41,6 +46,7 @@ Setting up the project architecture and development environment:
 ## Getting Started
 
 ### Prerequisites
+
 - Docker
 - Docker Compose
 
@@ -68,6 +74,5 @@ Setting up the project architecture and development environment:
 budget-app/
 ├── budget-app-api/     # Symfony API
 ├── budget-app-front/   # Frontend application (in progress)
-├── docs/               # Documentation
 └── docker-compose.yaml # Docker services configuration
 ```
