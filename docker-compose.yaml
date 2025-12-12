@@ -7,11 +7,13 @@ services:
     ports:
       - "8000:80"
     environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
       - DB_HOST=db
     depends_on:
       - db
     volumes:
-      - ./budget-app-api:/var/www
+      - ./budget-app-api:/var/www # Bind Mount (hot reload) : for development
     networks:
       - budget-network
 
@@ -25,7 +27,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
       - POSTGRES_DB=${POSTGRES_DB:-budget_db}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:

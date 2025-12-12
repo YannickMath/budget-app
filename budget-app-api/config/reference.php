@@ -1683,6 +1683,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         twig?: TwigConfig,
  *         nelmio_cors?: NelmioCorsConfig,
  *         api_platform?: ApiPlatformConfig,
+ *         maker?: MakerConfig,
  *         web_profiler?: WebProfilerConfig,
  *         stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *     },

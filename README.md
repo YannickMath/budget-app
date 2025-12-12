@@ -66,6 +66,7 @@ Setting up the project architecture and development environment:
 
 - API: http://localhost:8000
 - Database: localhost:5432
+- API Platform: http://localhost:8000/api
 - Mailhog UI: http://localhost:8025
 
 ## Project Structure
