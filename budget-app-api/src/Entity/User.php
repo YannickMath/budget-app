@@ -5,26 +5,53 @@ namespace App\Entity;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
+#[ApiResource]
+
 class User
 {
+    public function __construct()
+    {
+        $this->publicId = Uuid::v4();
+    }
+    
     #[ORM\Id]
-    #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[ORM\GeneratedValue]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[Assert\Uuid]
+    private ?Uuid $publicId = null;
+
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: 'Email obligatoire')]
+    #[Assert\Email(message: 'Email invalide')]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column]
+    #[Assert\NotBlank(message: 'Mot de passe obligatoire')]
+    #[Assert\Length(
+        min: 8,
+        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères',
+        max: 30,
+        maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} caractères'
+    )]
     private ?string $password = null;
 
     #[ORM\Column(length: 5)]
-    private ?string $locale = null;
+    #[Assert\Choice(choices: ['fr', 'en'], message: 'Langue obligatoire')]
+    private ?string $locale = 'fr';
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Fuseau horaire obligatoire')]
+    #[Assert\Timezone]
     private ?string $timezone = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
@@ -36,26 +63,35 @@ class User
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $email_verified_at = null;
 
-    #[ORM\Column]
-    private ?bool $is_active = null;
+    #[ORM\Column(options: ['default' => true])]
+    private bool $is_active = true;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $last_login_at = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: 'create')]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: 'update')]
     private ?\DateTimeImmutable $updated_at = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
+    #[Gedmo\SoftDeleteable(fieldName: 'deleted_at')]
     private ?\DateTimeImmutable $deleted_at = null;
+
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    public function getPublicId(): ?Uuid
+    {
+        return $this->publicId;
+    }
+    
     public function getEmail(): ?string
     {
         return $this->email;
@@ -106,7 +142,10 @@ class User
 
     public function getRoles(): array
     {
-        return $this->roles;
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
     }
 
     public function setRoles(array $roles): static
