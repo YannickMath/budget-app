@@ -21,8 +21,20 @@ RUN apt-get update && apt-get install -y \
 # 3. On active les extensions PHP utiles pour Symfony
 #    pdo_pgsql = driver PostgreSQL
 #    intl = gestion des dates, formatage
+#    opcache = cache de bytecode PHP (performance)
 # --------------------------------------------------------------------
-RUN docker-php-ext-install pdo pdo_pgsql intl
+RUN docker-php-ext-install pdo pdo_pgsql intl opcache
+
+# --------------------------------------------------------------------
+# 3.1 Configuration OPcache pour le développement
+# --------------------------------------------------------------------
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'opcache.memory_consumption=256'; \
+    echo 'opcache.max_accelerated_files=20000'; \
+    echo 'opcache.validate_timestamps=1'; \
+    echo 'opcache.revalidate_freq=0'; \
+} > /usr/local/etc/php/conf.d/opcache.ini
 
 # --------------------------------------------------------------------
 # 4. Installer Composer en copiant l'exécutable depuis l'image officielle Composer
@@ -72,13 +84,16 @@ COPY . .
 # 9. Installer les dépendances Symfony
 #    --no-interaction = pas de questions pendant l'exécution
 #    --prefer-dist = téléchargement plus rapide
+#    --no-scripts = pas d'exécution des scripts (cache:clear, etc.)
 # --------------------------------------------------------------------
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # --------------------------------------------------------------------
 # 10. Permissions pour les dossiers Symfony
 # --------------------------------------------------------------------
-RUN chown -R www-data:www-data /var/www/var
+RUN mkdir -p /var/www/var/cache /var/www/var/log \
+    && chown -R www-data:www-data /var/www/var \
+    && chmod -R 775 /var/www/var
 
 # --------------------------------------------------------------------
 # 11. Exposer le port 80
@@ -86,6 +101,13 @@ RUN chown -R www-data:www-data /var/www/var
 EXPOSE 80
 
 # --------------------------------------------------------------------
-# 12. Lancer Apache au démarrage
+# 11.5. Script d'entrypoint pour fixer les permissions au démarrage
+# --------------------------------------------------------------------
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# --------------------------------------------------------------------
+# 13. Lancer Apache au démarrage
 # --------------------------------------------------------------------
 CMD ["apache2-foreground"]
