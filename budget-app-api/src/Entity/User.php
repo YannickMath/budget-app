@@ -9,11 +9,17 @@ use ApiPlatform\Metadata\ApiResource;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use Gedmo\Mapping\Annotation as Gedmo;
+use ApiPlatform\Metadata\Get;
+use App\Provider\UserAttributesProvider;
+use App\DTO\User\Output\UserAttributesOutput;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ApiResource]
-
+#[Get(
+    provider: UserAttributesProvider::class,
+    output: UserAttributesOutput::class
+)]
 class User
 {
     public function __construct()
@@ -34,6 +40,16 @@ class User
     #[Assert\NotBlank(message: 'Email obligatoire')]
     #[Assert\Email(message: 'Email invalide')]
     private ?string $email = null;
+
+    #[ORM\Column(length: 50, unique: true)]
+    #[Assert\NotBlank(message: 'Nom d\'utilisateur obligatoire')]
+    #[Assert\Length(
+        min: 3,
+        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères',
+        max: 50,
+        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères'
+    )]
+    private ?string $username = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: 'Mot de passe obligatoire')]
@@ -90,6 +106,18 @@ class User
     public function getPublicId(): ?Uuid
     {
         return $this->publicId;
+    }
+
+    public function getUsername(): ?string
+    {
+        return $this->username;
+    }
+
+    public function setUsername(string $username): static
+    {
+        $this->username = $username;
+
+        return $this;
     }
     
     public function getEmail(): ?string
