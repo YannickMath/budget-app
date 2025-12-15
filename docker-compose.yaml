@@ -1,47 +1,48 @@
 services:
-  # service API
+  # Service API
   api:
-    build: ./budget-app-api
+    build: ./budget_app_api
+    container_name: budget_app_api
     ports:
       - "8000:80"
     environment:
       - APP_ENV=dev
       - APP_DEBUG=true
-      - DB_HOST=db
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-budget_app}?serverVersion=15&charset=utf8
     depends_on:
       - db
     volumes:
-      - ./budget-app-api:/var/www # Bind Mount (hot reload) : for development
+      - ./budget_app_api:/var/www # Bind Mount (hot reload) : for development
     networks:
-      - budget-network
+      - budget_network
 
-  # service frontend
-
-  # service database
+  # Service Database
   db:
     image: postgres:15-alpine
+    container_name: budget_app_db
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
-      - POSTGRES_DB=${POSTGRES_DB:-budget_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_DB: ${POSTGRES_DB:-budget_app}
     ports:
       - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
-      - budget-network
+      - budget_network
 
-  # service Mailhog
+  # Service Mailhog
   mailhog:
     image: mailhog/mailhog:v1.0.1
+    container_name: budget_app_mailhog
     ports:
       - "1025:1025"
       - "8025:8025"
     networks:
-      - budget-network
+      - budget_network
 
 volumes:
   db_data:
 
 networks:
-  budget-network:
+  budget_network:
