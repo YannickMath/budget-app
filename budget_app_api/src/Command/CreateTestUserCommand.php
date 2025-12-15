@@ -18,6 +18,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class CreateTestUserCommand extends Command
 {
     public function __construct(
+        
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher
     ) {
@@ -28,9 +29,8 @@ class CreateTestUserCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $email = 'test@example.com';  // ← Défini une seule fois
+        $email = 'test@example.com';
 
-        // Vérifier si l'utilisateur existe déjà
         $existingUser = $this->entityManager
             ->getRepository(User::class)
             ->findOneBy(['email' => $email]);
@@ -41,7 +41,7 @@ class CreateTestUserCommand extends Command
         }
 
         $user = new User();
-        $user->setEmail($email);  // ← Utilise la même variable
+        $user->setEmail($email); 
         $user->setUsername('testuser');
         $user->setTimezone('Europe/Paris');
         $user->setLocale('fr');
@@ -50,7 +50,7 @@ class CreateTestUserCommand extends Command
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setUpdatedAt(new \DateTimeImmutable());
         
-        // ✅ Hasher le password CORRECTEMENT
+        
         $hashedPassword = $this->passwordHasher->hashPassword($user, 'password123');
         $user->setPassword($hashedPassword);
 
