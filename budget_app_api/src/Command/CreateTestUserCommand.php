@@ -9,6 +9,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:create-test-user',
@@ -17,7 +18,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class CreateTestUserCommand extends Command
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private UserPasswordHasherInterface $passwordHasher
     ) {
         parent::__construct();
     }
@@ -26,24 +28,42 @@ class CreateTestUserCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        $email = 'test@example.com';  // ← Défini une seule fois
+
+        // Vérifier si l'utilisateur existe déjà
+        $existingUser = $this->entityManager
+            ->getRepository(User::class)
+            ->findOneBy(['email' => $email]);
+
+        if ($existingUser) {
+            $io->warning("L'utilisateur {$email} existe déjà !");
+            return Command::FAILURE;
+        }
+
         $user = new User();
-        $user->setEmail('test@example.com');
+        $user->setEmail($email);  // ← Utilise la même variable
         $user->setUsername('testuser');
-        $user->setPassword(password_hash('password123', PASSWORD_BCRYPT));
-        $user->setLocale('fr');
         $user->setTimezone('Europe/Paris');
+        $user->setLocale('fr');
         $user->setRoles(['ROLE_USER']);
         $user->setIsActive(true);
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setUpdatedAt(new \DateTimeImmutable());
+        
+        // ✅ Hasher le password CORRECTEMENT
+        $hashedPassword = $this->passwordHasher->hashPassword($user, 'password123');
+        $user->setPassword($hashedPassword);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
         $io->success(sprintf(
-            'Utilisateur de test créé avec succès ! ID: %d, Email: %s',
-            $user->getId(),
-            $user->getEmail()
+            'Utilisateur de test créé avec succès !' . PHP_EOL .
+            'Email: %s' . PHP_EOL .
+            'Password: password123' . PHP_EOL .
+            'ID: %d',
+            $user->getEmail(),
+            $user->getId()
         ));
 
         return Command::SUCCESS;

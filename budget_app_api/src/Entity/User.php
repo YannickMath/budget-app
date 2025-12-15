@@ -12,6 +12,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
 use ApiPlatform\Metadata\Get;
 use App\Provider\UserAttributesProvider;
 use App\DTO\User\Output\UserAttributesOutput;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -20,7 +22,7 @@ use App\DTO\User\Output\UserAttributesOutput;
     provider: UserAttributesProvider::class,
     output: UserAttributesOutput::class
 )]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public function __construct()
     {
@@ -132,6 +134,16 @@ class User
         return $this;
     }
 
+    /**
+     * The public representation of the user (e.g. a username, an email address, etc.)
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
     public function getPassword(): ?string
     {
         return $this->password;
@@ -142,6 +154,12 @@ class User
         $this->password = $password;
 
         return $this;
+    }
+
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
     }
 
     public function getLocale(): ?string
