@@ -2,27 +2,43 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiResource;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use Gedmo\Mapping\Annotation as Gedmo;
 use ApiPlatform\Metadata\Get;
-use App\Provider\UserAttributesProvider;
+use ApiPlatform\Metadata\GetCollection;
+// use ApiPlatform\Metadata\Link;
 use App\DTO\User\Output\UserAttributesOutputDTO;
+use App\Provider\User\UserCollectionAttributesProvider;
+use App\Provider\User\UserAttributesProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[ApiResource]
+#[ApiResource()]
 #[Get(
-    security: "is_granted('ROLE_ADMIN') or object.getPublicId() == user.getPublicId()",
-    securityMessage: "You do not have access to this resource.",
+    // uriTemplate: '/users/{publicId}',
+    //         uriVariables: [
+        //     'publicId' => new Link(
+    //         fromClass: User::class,
+    //         identifiers: ['publicId']
+    //     )
+    // ],
     provider: UserAttributesProvider::class,
-    output: UserAttributesOutputDTO::class
+    output: UserAttributesOutputDTO::class,
+    security: 'is_granted("ROLE_ADMIN")',
+    securityMessage: 'Access denied.'
+)]
+#[GetCollection(
+    provider: UserCollectionAttributesProvider::class,
+    output: UserAttributesOutputDTO::class,
+    security: 'is_granted("ROLE_ADMIN")',
+    securityMessage: 'Access denied.'
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {

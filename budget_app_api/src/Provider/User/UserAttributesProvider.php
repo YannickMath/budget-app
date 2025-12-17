@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Provider;
+namespace App\Provider\User;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
@@ -23,6 +23,7 @@ final class UserAttributesProvider implements ProviderInterface
         array $uriVariables = [],
         array $context = []
     ): ?UserAttributesOutputDTO {
+        dump("on passe ici");
         $id = $uriVariables['id'] ?? null;
         if (!$id) {
             return null;
