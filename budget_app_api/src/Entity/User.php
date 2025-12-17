@@ -11,7 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Gedmo\Mapping\Annotation as Gedmo;
 use ApiPlatform\Metadata\Get;
 use App\Provider\UserAttributesProvider;
-use App\DTO\User\Output\UserAttributesOutput;
+use App\DTO\User\Output\UserAttributesOutputDTO;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -19,8 +19,10 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Table(name: '`user`')]
 #[ApiResource]
 #[Get(
+    security: "is_granted('ROLE_ADMIN') or object.getPublicId() == user.getPublicId()",
+    securityMessage: "You do not have access to this resource.",
     provider: UserAttributesProvider::class,
-    output: UserAttributesOutput::class
+    output: UserAttributesOutputDTO::class
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -72,7 +74,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Timezone]
     private ?string $timezone = null;
 
-    #[ORM\Column(type: Types::SIMPLE_ARRAY)]
+    #[ORM\Column(type: Types::JSON)]
     private array $roles = [];
 
     #[ORM\Column(length: 500, nullable: true)]
@@ -110,7 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->publicId;
     }
 
-    public function getUsername(): ?string
+    public function getDisplayName(): ?string
     {
         return $this->username;
     }

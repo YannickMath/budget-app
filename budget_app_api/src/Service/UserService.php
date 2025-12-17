@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\DTO\User\Output\UserAttributesOutput;
+use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 
@@ -17,11 +17,12 @@ class UserService
         return $this->userRepository->find($id);
     }
 
-    public function toDetailsAttributesForUser(User $user): UserAttributesOutput
+    public function toDetailsAttributesForUser(User $user): UserAttributesOutputDTO
     {
-        return new UserAttributesOutput(
+        return new UserAttributesOutputDTO(
             email: $user->getEmail(),
-            username: $user->getUsername(),
+            publicId: $user->getPublicId(),
+            username: $user->getDisplayName(),
             locale: $user->getLocale(),
             timezone: $user->getTimezone(),
             roles: $user->getRoles()

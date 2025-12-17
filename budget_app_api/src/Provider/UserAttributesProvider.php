@@ -4,7 +4,7 @@ namespace App\Provider;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
-use App\DTO\User\Output\UserAttributesOutput;
+use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\Service\UserService;
 
 final class UserAttributesProvider implements ProviderInterface
@@ -16,13 +16,13 @@ final class UserAttributesProvider implements ProviderInterface
      * @param array $uriVariables
      * @param array $context
      * 
-     * @return UserAttributesOutput|null
+     * @return UserAttributesOutputDTO|null
      */
     public function provide(
         Operation $operation,
         array $uriVariables = [],
         array $context = []
-    ): ?UserAttributesOutput {
+    ): ?UserAttributesOutputDTO {
         $id = $uriVariables['id'] ?? null;
         if (!$id) {
             return null;

@@ -1,27 +1,21 @@
 # --------------------------------------------------------------------
-# 1. On part d'une image officielle PHP avec Apache
-#    Tout-en-un : PHP + serveur web Apache intégré
+# 1. Image PHP-FPM (sans Apache)
 # --------------------------------------------------------------------
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
 # --------------------------------------------------------------------
-# 2. On met à jour le système Debian interne et on installe des paquets nécessaires
-#    - git, unzip : utiles pour Composer
-#    - libicu-dev : utile pour Intl (formatage dates, nombres)
-#    - libpq-dev : driver PostgreSQL si besoin
+# 2. Installation des paquets nécessaires + Nginx
 # --------------------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libicu-dev \
     libpq-dev \
+    nginx \
 && rm -rf /var/lib/apt/lists/*
 
 # --------------------------------------------------------------------
-# 3. On active les extensions PHP utiles pour Symfony
-#    pdo_pgsql = driver PostgreSQL
-#    intl = gestion des dates, formatage
-#    opcache = cache de bytecode PHP (performance)
+# 3. Extensions PHP pour Symfony
 # --------------------------------------------------------------------
 RUN docker-php-ext-install pdo pdo_pgsql intl opcache
 
@@ -37,77 +31,75 @@ RUN { \
 } > /usr/local/etc/php/conf.d/opcache.ini
 
 # --------------------------------------------------------------------
-# 4. Installer Composer en copiant l'exécutable depuis l'image officielle Composer
+# 4. Installer Composer
 # --------------------------------------------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # --------------------------------------------------------------------
-# 5. Activer mod_rewrite Apache (nécessaire pour Symfony)
+# 5. Configuration Nginx pour Symfony
 # --------------------------------------------------------------------
-RUN a2enmod rewrite
+RUN echo 'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+    root /var/www/public;\n\
+    \n\
+    location / {\n\
+        try_files $uri /index.php$is_args$args;\n\
+    }\n\
+    \n\
+    location ~ ^/index\.php(/|$) {\n\
+        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;\n\
+        include fastcgi_params;\n\
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;\n\
+        fastcgi_param DOCUMENT_ROOT $realpath_root;\n\
+        fastcgi_param HTTP_AUTHORIZATION $http_authorization;\n\
+        internal;\n\
+    }\n\
+    \n\
+    location ~ \.php$ {\n\
+        return 404;\n\
+    }\n\
+    \n\
+    error_log /var/log/nginx/error.log;\n\
+    access_log /var/log/nginx/access.log;\n\
+}' > /etc/nginx/sites-available/default
 
 # --------------------------------------------------------------------
-# 6. Créer la configuration Apache directement dans le Dockerfile
-#    Pas besoin de fichier externe !
-# --------------------------------------------------------------------
-RUN echo '<VirtualHost *:80>\n\
-    ServerName localhost\n\
-    DocumentRoot /var/www/public\n\
-    \n\
-    <Directory /var/www/public>\n\
-        AllowOverride All\n\
-        Require all granted\n\
-        \n\
-        # Symfony routing\n\
-        FallbackResource /index.php\n\
-    </Directory>\n\
-    \n\
-    <Directory /var/www/public/bundles>\n\
-        FallbackResource disabled\n\
-    </Directory>\n\
-    \n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
-
-# --------------------------------------------------------------------
-# 7. Définir le dossier de travail
+# 6. Définir le dossier de travail
 # --------------------------------------------------------------------
 WORKDIR /var/www
 
 # --------------------------------------------------------------------
-# 8. Copier tout le projet Symfony dans le conteneur
+# 7. Copier le projet Symfony
 # --------------------------------------------------------------------
 COPY . .
 
 # --------------------------------------------------------------------
-# 9. Installer les dépendances Symfony
-#    --no-interaction = pas de questions pendant l'exécution
-#    --prefer-dist = téléchargement plus rapide
-#    --no-scripts = pas d'exécution des scripts (cache:clear, etc.)
+# 8. Installer les dépendances Symfony
 # --------------------------------------------------------------------
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # --------------------------------------------------------------------
-# 10. Permissions pour les dossiers Symfony
+# 9. Permissions pour Symfony
 # --------------------------------------------------------------------
 RUN mkdir -p /var/www/var/cache /var/www/var/log \
     && chown -R www-data:www-data /var/www/var \
     && chmod -R 775 /var/www/var
 
 # --------------------------------------------------------------------
-# 11. Exposer le port 80
+# 10. Exposer le port 80
 # --------------------------------------------------------------------
 EXPOSE 80
 
 # --------------------------------------------------------------------
-# 11.5. Script d'entrypoint pour fixer les permissions au démarrage
+# 11. Script d'entrypoint
 # --------------------------------------------------------------------
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # --------------------------------------------------------------------
-# 13. Lancer Apache au démarrage
+# 12. Lancer PHP-FPM et Nginx
 # --------------------------------------------------------------------
-CMD ["apache2-foreground"]
+CMD service nginx start && php-fpm
