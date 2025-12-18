@@ -22,17 +22,13 @@ final class UserCollectionAttributesProvider implements ProviderInterface
         array $uriVariables = [],
         array $context = []
         ): ?array 
-        
         {
         $users = $this->userService->findAll();
         if (!$users) {
             return null;
         }
-
         $userDTOs = [];
         foreach ($users as $user) {
-            dump("user dans la boucle");
-            dump($user);
 
             $userDTOs[] = $this->userService->toDetailsAttributesForUser($user);
 
