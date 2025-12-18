@@ -22,8 +22,8 @@ final class UserAttributesProvider implements ProviderInterface
         Operation $operation,
         array $uriVariables = [],
         array $context = []
-    ): ?UserAttributesOutputDTO {
-        dump("on passe ici");
+    ): ?UserAttributesOutputDTO 
+    {
         $id = $uriVariables['id'] ?? null;
         if (!$id) {
             return null;

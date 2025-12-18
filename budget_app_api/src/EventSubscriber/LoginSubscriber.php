@@ -3,14 +3,14 @@
 namespace App\EventSubscriber;
 
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\UserRepository;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
 class LoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private UserRepository $userRepository,
     )
     {
     }
@@ -28,6 +28,6 @@ class LoginSubscriber implements EventSubscriberInterface
             return;
         }
         $user->setLastLoginAt(new \DateTimeImmutable());
-        $this->entityManager->flush();
+        $this->userRepository->save($user, true);
     }
 }

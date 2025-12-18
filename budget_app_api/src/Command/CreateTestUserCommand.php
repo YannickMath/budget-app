@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\UserRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,8 +18,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class CreateTestUserCommand extends Command
 {
     public function __construct(
-        
-        private EntityManagerInterface $entityManager,
+        private UserRepository $userRepository,
         private UserPasswordHasherInterface $passwordHasher
     ) {
         parent::__construct();
@@ -31,9 +30,7 @@ class CreateTestUserCommand extends Command
 
         $email = 'test@example.com';
 
-        $existingUser = $this->entityManager
-            ->getRepository(User::class)
-            ->findOneBy(['email' => $email]);
+        $existingUser = $this->userRepository->findOneBy(['email' => $email]);
 
         if ($existingUser) {
             $io->warning("L'utilisateur {$email} existe déjà !");
@@ -41,21 +38,17 @@ class CreateTestUserCommand extends Command
         }
 
         $user = new User();
-        $user->setEmail($email); 
+        $user->setEmail($email);
         $user->setUsername('testuser');
         $user->setTimezone('Europe/Paris');
         $user->setLocale('fr');
         $user->setRoles(['ROLE_USER']);
         $user->setIsActive(true);
-        $user->setCreatedAt(new \DateTimeImmutable());
-        $user->setUpdatedAt(new \DateTimeImmutable());
-        
-        
+
         $hashedPassword = $this->passwordHasher->hashPassword($user, 'password123');
         $user->setPassword($hashedPassword);
 
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        $this->userRepository->save($user, true);
 
         $io->success(sprintf(
             'Utilisateur de test créé avec succès !' . PHP_EOL .

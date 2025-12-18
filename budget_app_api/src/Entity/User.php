@@ -11,8 +11,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Gedmo\Mapping\Annotation as Gedmo;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-// use ApiPlatform\Metadata\Link;
+use ApiPlatform\Metadata\Post;
+use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
 use App\DTO\User\Output\UserAttributesOutputDTO;
+use App\Processor\User\UserAttributesProcessor;
 use App\Provider\User\UserCollectionAttributesProvider;
 use App\Provider\User\UserAttributesProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -20,6 +22,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
+#[Gedmo\SoftDeleteable(fieldName: 'deleted_at', timeAware: false)]
 #[ApiResource()]
 #[Get(
     // uriTemplate: '/users/{publicId}',
@@ -40,6 +43,14 @@ use Symfony\Component\Security\Core\User\UserInterface;
     security: 'is_granted("ROLE_ADMIN")',
     securityMessage: 'Access denied.'
 )]
+#[Post(
+    processor: UserAttributesProcessor::class,
+    input: UserRegistrationInputDTO::class,
+    output: UserAttributesOutputDTO::class,
+    security: 'is_granted("ROLE_ADMIN")',
+    securityMessage: 'Access denied.'
+)]
+
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public function __construct()
@@ -114,7 +125,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $updated_at = null;
 
     #[ORM\Column(nullable: true)]
-    #[Gedmo\SoftDeleteable(fieldName: 'deleted_at')]
     private ?\DateTimeImmutable $deleted_at = null;
 
 
@@ -176,8 +186,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        ## If you store any temporary, sensitive data on the user, clear it here
     }
 
     public function getLocale(): ?string
@@ -272,23 +281,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updated_at;
-    }
-
-    public function setUpdatedAt(\DateTimeImmutable $updated_at): static
-    {
-        $this->updated_at = $updated_at;
-
-        return $this;
     }
 
     public function getDeletedAt(): ?\DateTimeImmutable
