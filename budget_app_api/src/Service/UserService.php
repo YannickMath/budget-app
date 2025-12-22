@@ -3,24 +3,29 @@
 namespace App\Service;
 
 use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
+use App\DTO\User\Input\UserUpdateInputDTO;
 use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\DTO\User\Output\UserCollectionAttributesOutputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
 class UserService
 {
     public function __construct(
-        private UserRepository $userRepository
+        private UserRepository $userRepository,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+
     ) {}
 
     
-    public function createUser(UserRegistrationInputDTO $data, string $hashedPassword): User
+    public function createNewUser(UserRegistrationInputDTO $data): User
     {
         $user = new User();
         $user->setEmail($data->email);
         $user->setUsername($data->username);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
         $user->setPassword($hashedPassword);
         $user->setTimezone($data->timezone);
         $user->setLocale($data->locale);
@@ -28,6 +33,30 @@ class UserService
         
         $this->userRepository->save($user, true);
         
+        return $user;
+    }
+
+    public function updateUser(UserUpdateInputDTO $data, User $user): User
+    {
+        if ($data->username !== null) {
+            $user->setUsername($data->username);
+        }
+        if ($data->password !== null) {
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
+            $user->setPassword($hashedPassword);
+        }
+        if ($data->is_active !== null) {
+            $user->setIsActive($data->is_active);
+        }
+        if ($data->roles !== null) {
+            $user->setRoles($data->roles);
+        }
+        if ($data->email_verified_at !== null) {
+            $user->setEmailVerifiedAt($data->email_verified_at);
+        }
+        
+        $this->userRepository->save($user, true);
+
         return $user;
     }
 
@@ -52,7 +81,7 @@ class UserService
         
     }
 
-    public function toCollectionAttributesForUser(array $users): UserCollectionAttributesOutputDTO
+    public function toCollectionAttributesForUsers(array $users): UserCollectionAttributesOutputDTO
     {
         $userDTOs = [];
         

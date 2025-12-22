@@ -30,7 +30,7 @@ final class UserCollectionAttributesProvider implements ProviderInterface
         $userDTOs = [];
         foreach ($users as $user) {
 
-            $userDTOs[] = $this->userService->toDetailsAttributesForUser($user);
+            $userDTOs[] = $this->userService->toCollectionAttributesForUsers($users);
 
         }
         return $userDTOs;

@@ -12,7 +12,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 /**
  * Processor for creating new users
  */
-class UserAttributesProcessor implements ProcessorInterface
+class UserCreateProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly UserService $userService,
@@ -31,9 +31,8 @@ class UserAttributesProcessor implements ProcessorInterface
         }
 
         $tempUser = new User();
-        $hashedPassword = $this->passwordHasher->hashPassword($tempUser, $data->password);
 
-        return $this->userService->createUser($data, $hashedPassword);
+        return $this->userService->createNewUser($data);
     }
 
 }

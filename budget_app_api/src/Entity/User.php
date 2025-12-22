@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,18 +11,22 @@ use Gedmo\Mapping\Annotation as Gedmo;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
+use App\DTO\User\Input\UserUpdateInputDTO;
 use App\DTO\User\Output\UserAttributesOutputDTO;
-use App\Processor\User\UserAttributesProcessor;
+use App\Processor\User\UserCreateProcessor;
+use App\Processor\User\UserUpdateProcessor;
 use App\Provider\User\UserCollectionAttributesProvider;
 use App\Provider\User\UserAttributesProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[Gedmo\SoftDeleteable(fieldName: 'deleted_at', timeAware: false)]
-#[ApiResource()]
+// #[ApiResource()]
 #[Get(
     // uriTemplate: '/users/{publicId}',
     //         uriVariables: [
@@ -44,12 +47,23 @@ use Symfony\Component\Security\Core\User\UserInterface;
     securityMessage: 'Access denied.'
 )]
 #[Post(
-    processor: UserAttributesProcessor::class,
+    processor: UserCreateProcessor::class,
     input: UserRegistrationInputDTO::class,
     output: UserAttributesOutputDTO::class,
     security: 'is_granted("ROLE_ADMIN")',
     securityMessage: 'Access denied.'
 )]
+#[Put(
+     denormalizationContext: [
+        AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
+    ],
+    processor: UserUpdateProcessor::class,
+    input: UserUpdateInputDTO::class,
+    output: UserAttributesOutputDTO::class,
+    security: 'is_granted("ROLE_ADMIN")',
+    securityMessage: 'Access denied.'
+)]
+
 
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
