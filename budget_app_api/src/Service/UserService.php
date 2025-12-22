@@ -8,6 +8,7 @@ use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\DTO\User\Output\UserCollectionAttributesOutputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -15,8 +16,9 @@ class UserService
 {
     public function __construct(
         private UserRepository $userRepository,
-        private readonly UserPasswordHasherInterface $passwordHasher,
 
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly EntityManagerInterface $entityManager,
     ) {}
 
     
@@ -38,20 +40,20 @@ class UserService
 
     public function updateUser(UserUpdateInputDTO $data, User $user): User
     {
-        if ($data->username !== null) {
+        if ($data->username !== null && $data->username !== $user->getDisplayName()) {
             $user->setUsername($data->username);
         }
-        if ($data->password !== null) {
+        if ($data->password !== null && !password_verify($data->password, $user->getPassword())) {
             $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
             $user->setPassword($hashedPassword);
         }
-        if ($data->is_active !== null) {
+        if ($data->is_active !== null && $data->is_active !== $user->isActive()) {
             $user->setIsActive($data->is_active);
         }
-        if ($data->roles !== null) {
+        if ($data->roles !== null && $data->roles !== $user->getRoles()) {
             $user->setRoles($data->roles);
         }
-        if ($data->email_verified_at !== null) {
+        if ($data->email_verified_at !== null && $data->email_verified_at !== $user->getEmailVerifiedAt()) {
             $user->setEmailVerifiedAt($data->email_verified_at);
         }
         
