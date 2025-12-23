@@ -2,12 +2,10 @@
 
 namespace App\Service\Auth;
 
-class AuthService
+class ResetPasswordService
 {
     public function __construct()
     {
     }
 
-
-
-}   
+}

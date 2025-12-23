@@ -5,7 +5,7 @@ namespace App\Provider\User;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\DTO\User\Output\UserAttributesOutputDTO;
-use App\Service\UserService;
+use App\Service\User\UserService;
 
 final class UserAttributesProvider implements ProviderInterface
 {

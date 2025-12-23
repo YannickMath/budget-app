@@ -11,10 +11,10 @@ use App\Service\Auth\ForgotPasswordService;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Exception\RfcComplianceException;
 #[AsController]
-final class ForgotPasswordController extends AbstractController
+final class ResentVerificationEmailController extends AbstractController
 {
     public function __construct(
         // private readonly ForgotPasswordService $forgotPasswordService
     ) {}
 
-    }
+}

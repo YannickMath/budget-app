@@ -2,9 +2,8 @@
 
 namespace App\Controller\User;
 
-use ApiPlatform\Metadata\Exception\AccessDeniedException;
 use App\DTO\Profile\Input\UserProfileEditInputDTO;
-use App\Service\ProfileService;
+use App\Service\User\ProfileService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;

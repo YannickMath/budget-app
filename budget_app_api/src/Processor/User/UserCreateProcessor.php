@@ -6,7 +6,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
 use App\Entity\User;
-use App\Service\UserService;
+use App\Service\User\UserService as UserUserService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -15,7 +15,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class UserCreateProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly UserService $userService,
+        private readonly UserUserService $userService,
     ) {
     }
 

@@ -7,7 +7,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\DTO\User\Input\UserUpdateInputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Service\UserService;
+use App\Service\User\UserService as UserUserService;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 class UserUpdateProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly UserService $userService,
+        private readonly UserUserService $userService,
         private UserRepository $userRepository
     ) {
     }
