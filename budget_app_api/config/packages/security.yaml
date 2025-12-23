@@ -25,6 +25,7 @@ security:
             pattern: ^/api/login_check$ # Matches only /api/login_check
             stateless: true # No session created (for JWT)
             provider: app_user_provider # Uses app_user_provider to load users
+            user_checker: App\Security\UserChecker # Validates user status before auth
             json_login:
                 check_path: /api/login_check # URL where login is processed
                 username_path: email # JSON field for email
@@ -37,11 +38,13 @@ security:
             pattern: ^/api # Matches all URLs starting with /api
             stateless: true # No session (REST API with JWT)
             provider: app_user_provider # Uses app_user_provider to load users
+            user_checker: App\Security\UserChecker # Validates user status on each request
             jwt: ~ # Enables JWT authentication from LexikJWTAuthenticationBundle
 
     access_control:
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/verify-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

@@ -47,6 +47,9 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
     securityMessage: 'Access denied.'
 )]
 #[Post(
+    denormalizationContext: [
+        AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
+    ],
     processor: UserCreateProcessor::class,
     input: UserRegistrationInputDTO::class,
     output: UserAttributesOutputDTO::class,
@@ -123,6 +126,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $email_verified_at = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $email_verification_token = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $email_verification_token_expires_at = null;
 
     #[ORM\Column(options: ['default' => true])]
     private bool $is_active = true;
@@ -264,6 +273,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->email_verified_at = $email_verified_at;
 
         return $this;
+    }
+
+    public function getEmailVerificationToken(): ?string
+    {
+        return $this->email_verification_token;
+    }
+
+    public function setEmailVerificationToken(?string $email_verification_token): static
+    {
+        $this->email_verification_token = $email_verification_token;
+
+        return $this;
+    }
+
+    public function getEmailVerificationTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->email_verification_token_expires_at;
+    }
+
+    public function setEmailVerificationTokenExpiresAt(?\DateTimeImmutable $email_verification_token_expires_at): static
+    {
+        $this->email_verification_token_expires_at = $email_verification_token_expires_at;
+
+        return $this;
+    }
+
+    public function isEmailVerificationTokenValid(): bool
+    {
+        if ($this->email_verification_token === null || $this->email_verification_token_expires_at === null) {
+            return false;
+        }
+
+        return $this->email_verification_token_expires_at > new \DateTimeImmutable();
     }
 
     public function isActive(): ?bool

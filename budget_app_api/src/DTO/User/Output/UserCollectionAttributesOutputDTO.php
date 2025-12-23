@@ -7,7 +7,7 @@ use Symfony\Component\Uid\Uuid;
 readonly class UserCollectionAttributesOutputDTO
 { 
     public function __construct(
-        ## array of UserAttributesOutputDTO
+       /** @var UserAttributesOutputDTO[] */
         public array $users
     ) {}
     

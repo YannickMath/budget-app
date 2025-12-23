@@ -8,7 +8,10 @@ use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\DTO\User\Output\UserCollectionAttributesOutputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Exception;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -18,7 +21,6 @@ class UserService
         private UserRepository $userRepository,
 
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly EntityManagerInterface $entityManager,
     ) {}
 
     
@@ -32,32 +34,55 @@ class UserService
         $user->setTimezone($data->timezone);
         $user->setLocale($data->locale);
         $user->setRoles($data->roles);
-        
-        $this->userRepository->save($user, true);
-        
+
+        try {
+            $this->userRepository->save($user, true);
+        } catch (UniqueConstraintViolationException $e) {
+            throw new UnprocessableEntityHttpException('Cet email ou nom d\'utilisateur est déjà utilisé');
+        } catch (Exception $e) {
+            throw new RuntimeException('Erreur lors de la création de l\'utilisateur: ' . $e->getMessage());
+        }
+
         return $user;
     }
 
     public function updateUser(UserUpdateInputDTO $data, User $user): User
     {
+        $hasChanges = false;
+        
         if ($data->username !== null && $data->username !== $user->getDisplayName()) {
             $user->setUsername($data->username);
+            $hasChanges = true;
         }
         if ($data->password !== null && !password_verify($data->password, $user->getPassword())) {
             $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
             $user->setPassword($hashedPassword);
+            $hasChanges = true;
         }
         if ($data->is_active !== null && $data->is_active !== $user->isActive()) {
             $user->setIsActive($data->is_active);
+            $hasChanges = true;     
         }
         if ($data->roles !== null && $data->roles !== $user->getRoles()) {
             $user->setRoles($data->roles);
+            $hasChanges = true;
         }
         if ($data->email_verified_at !== null && $data->email_verified_at !== $user->getEmailVerifiedAt()) {
             $user->setEmailVerifiedAt($data->email_verified_at);
+            $hasChanges = true;
         }
         
-        $this->userRepository->save($user, true);
+        if (!$hasChanges) {
+            throw new UnprocessableEntityHttpException('No changes were made to the user.');
+        }
+
+        try {
+            $this->userRepository->save($user, true);
+        } catch (UniqueConstraintViolationException $e) {
+            throw new UnprocessableEntityHttpException('Cet email ou nom d\'utilisateur est déjà utilisé');
+        } catch (Exception $e) {
+            throw new RuntimeException('Erreur lors de la mise à jour de l\'utilisateur: ' . $e->getMessage());
+        }
 
         return $user;
     }
@@ -80,7 +105,6 @@ class UserService
             updatedAt: $user->getUpdatedAt(),
             deletedAt: $user->getDeletedAt(),
         );
-        
     }
 
     public function toCollectionAttributesForUsers(array $users): UserCollectionAttributesOutputDTO

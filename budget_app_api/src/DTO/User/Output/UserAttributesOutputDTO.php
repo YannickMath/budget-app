@@ -22,8 +22,4 @@ readonly class UserAttributesOutputDTO
         public ?\DateTimeImmutable $updatedAt,
         public ?\DateTimeImmutable $deletedAt,
     ) {}
-    public function getPublicId(): Uuid
-    {
-        return $this->publicId;
-    }
 }
