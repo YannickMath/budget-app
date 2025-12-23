@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Auth;
 
 use App\Repository\UserRepository;
 
 class EmailVerificationService
 {
-    // Implementation of email verification logic goes here
     public function __construct(
         private UserRepository $userRepository
     ) {}

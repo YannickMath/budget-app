@@ -1,14 +1,14 @@
 <?php
 
-namespace App\EventSubscriber;
+namespace App\EventSubscriber\Auth;
 
 use App\Event\RegisterSuccessEvent;
-use App\Service\EmailVerificationService;
+use App\Service\Auth\EmailVerificationService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 
-class RegisterSubscriber implements EventSubscriberInterface
+class AuthRegisterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private EmailVerificationService $emailVerificationService,

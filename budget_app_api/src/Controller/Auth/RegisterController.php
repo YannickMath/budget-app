@@ -3,7 +3,7 @@
 namespace App\Controller\Auth;
 
 use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
-use App\Service\RegistrationService;
+use App\Service\Auth\RegistrationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -15,11 +15,9 @@ class RegisterController extends AbstractController
 {
     public function __construct(
         private RegistrationService $registrationService,
-        private JWTTokenManagerInterface $jwtTokenManager,
-        
     ) {}
 
-    #[Route('/api/register', name: 'api_register', methods: ['POST'])]
+    #[Route('/api/auth/register', name: 'app_auth_register', methods: ['POST'])]
     public function register(#[MapRequestPayload()] UserRegistrationInputDTO $input): JsonResponse
     ## MapRequestPayload to automatically map the request payload to the DTO by deserializing the JSON payload, manage validation and error handling.
     {

@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Controller\Mailer;
+namespace App\Controller\Auth;
 
-use App\Service\EmailVerificationService;
+use App\Service\Auth\EmailVerificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-class MailerController extends AbstractController
+class VerifyEmailController extends AbstractController
 {
-    #[Route('/api/auth/verify-email', name: 'app_verify_email', methods: ['GET'])]
+    #[Route('/api/auth/verify-email', name: 'app_auth_verify_email', methods: ['GET'])]
     public function verifyEmail(
         Request $request,
         EmailVerificationService $emailVerificationService

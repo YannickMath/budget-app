@@ -1,5 +1,6 @@
 <?php
 
+## documentation: https://symfony.com/doc/current/security/user_checkers.html ##
 namespace App\Security;
 
 use App\Entity\User;
@@ -18,6 +19,12 @@ class UserChecker implements UserCheckerInterface
         if ($user->getEmailVerifiedAt() === null) {
             throw new CustomUserMessageAccountStatusException(
                 'Votre adresse email n\'a pas été vérifiée. Veuillez consulter votre boîte mail pour activer votre compte.'
+            );
+        }
+
+        if ($user->getDeletedAt() !== null) {
+            throw new CustomUserMessageAccountStatusException(
+                'Votre compte a été supprimé. Veuillez contacter le support pour plus d\'informations.'
             );
         }
 

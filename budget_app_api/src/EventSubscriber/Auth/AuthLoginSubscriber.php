@@ -1,13 +1,13 @@
 <?php
 
-namespace App\EventSubscriber;
+namespace App\EventSubscriber\Auth;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
-class LoginSubscriber implements EventSubscriberInterface
+class AuthLoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private UserRepository $userRepository,
