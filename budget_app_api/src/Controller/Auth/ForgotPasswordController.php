@@ -2,19 +2,29 @@
 
 namespace App\Controller\Auth;
 
+use App\DTO\Auth\ForgotPasswordInputDTO;
+use App\Service\Auth\ForgotPasswordService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\Request;
-use App\Service\Auth\ForgotPasswordService;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mime\Exception\RfcComplianceException;
 #[AsController]
 final class ForgotPasswordController extends AbstractController
 {
     public function __construct(
-        // private readonly ForgotPasswordService $forgotPasswordService
+        private readonly ForgotPasswordService $forgotPasswordService,
     ) {}
 
+    #[Route('/api/auth/forgot-password', name: 'app_auth_forgot_password', methods: ['POST'])]
+    public function forgotPassword(#[MapRequestPayload()] ForgotPasswordInputDTO $input): JsonResponse
+    {
+
+        $this->forgotPasswordService->requestPasswordReset($input->email);
+
+        return $this->json(["message" => "Si l'email existe, un lien de réinitialisation a été envoyé."], 200);
+        
+    
     }
+
+}

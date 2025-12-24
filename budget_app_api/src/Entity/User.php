@@ -133,6 +133,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $email_verification_token_expires_at = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $password_reset_token = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $password_reset_token_expires_at = null;
+
     #[ORM\Column(options: ['default' => true])]
     private bool $is_active = true;
 
@@ -306,6 +312,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this->email_verification_token_expires_at > new \DateTimeImmutable();
+    }
+
+    public function getPasswordResetToken(): ?string
+    {
+        return $this->password_reset_token;
+    }
+
+    public function setPasswordResetToken(?string $password_reset_token): static
+    {
+        $this->password_reset_token = $password_reset_token;
+
+        return $this;
+    }
+
+    public function getPasswordResetTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->password_reset_token_expires_at;
+    }
+
+    public function setPasswordResetTokenExpiresAt(?\DateTimeImmutable $password_reset_token_expires_at): static
+    {
+        $this->password_reset_token_expires_at = $password_reset_token_expires_at;
+
+        return $this;
+    }
+
+    public function isPasswordResetTokenValid(): bool
+    {
+        if ($this->password_reset_token === null || $this->password_reset_token_expires_at === null) {
+            return false;
+        }
+
+        return $this->password_reset_token_expires_at > new \DateTimeImmutable();
     }
 
     public function isActive(): ?bool
