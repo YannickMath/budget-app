@@ -24,10 +24,10 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
     public function onForgotPassword(ForgotPasswordEvent $event): void
     {
        $user = $event->getUser();
-        // Construction de l'URL de vérification
-        // TODO: Utiliser FRONTEND_URL quand le frontend sera prêt
-        $verificationUrl = sprintf(
-            'http://localhost:8000/api/auth/reset-password?token=%s',
+        // Construction de l'URL vers le frontend
+        // TODO: Remplacer par une variable d'environnement FRONTEND_URL en production
+        $resetUrl = sprintf(
+            'http://localhost:3000/reset-password?token=%s',
             $user->getPasswordResetToken()
         );
 
@@ -38,7 +38,7 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
             ->htmlTemplate('emails/forgot_password.html.twig')
             ->locale($user->getLocale())
             ->context([
-                'reset_url' => $verificationUrl,
+                'reset_url' => $resetUrl,
                 'username' => $user->getDisplayName(),
                 'expiration_date' => $user->getPasswordResetTokenExpiresAt(),
             ]);

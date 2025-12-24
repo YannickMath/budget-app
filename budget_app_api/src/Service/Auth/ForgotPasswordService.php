@@ -19,7 +19,7 @@ class ForgotPasswordService
     {
         
         $user = $this->userRepository->findOneByEmail($email);
-        if (!$user) {
+        if (!$user || !$user->isActive()) {
             return;
         }
 

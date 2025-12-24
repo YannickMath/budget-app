@@ -14,11 +14,18 @@ class ResetPasswordService
         private UserPasswordHasherInterface $passwordHasher
     ){}
 
-    public function resetPassword(string $token, ResetPasswordInputDTO $input): void
+    public function validateToken(string $token): bool
     {
         $user = $this->userRepository->findOneBy(['password_reset_token' => $token]);
 
-        if (!$user || !$user->isPasswordResetTokenValid()) {
+        return $user && $user->isPasswordResetTokenValid();
+    }
+
+    public function resetPassword(string $token, ResetPasswordInputDTO $input): void
+    {
+        $user = $this->userRepository->findOneBy(['password_reset_token' => $token]);
+        
+        if (!$user || !$user->isPasswordResetTokenValid() || !$user->isActive()) {
             throw new BadRequestHttpException('Invalid or expired token.');
         }
 

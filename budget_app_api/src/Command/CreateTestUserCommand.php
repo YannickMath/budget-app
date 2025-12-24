@@ -44,6 +44,7 @@ class CreateTestUserCommand extends Command
         $user->setLocale('fr');
         $user->setRoles(['ROLE_USER']);
         $user->setIsActive(true);
+        $user->setEmailVerifiedAt(new \DateTimeImmutable()); // Email vérifié pour éviter le blocage
 
         $hashedPassword = $this->passwordHasher->hashPassword($user, 'password123');
         $user->setPassword($hashedPassword);
