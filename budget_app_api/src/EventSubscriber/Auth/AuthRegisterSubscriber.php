@@ -7,12 +7,15 @@ use App\Service\Auth\EmailVerificationService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class AuthRegisterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private EmailVerificationService $emailVerificationService,
-        private MailerInterface $mailer
+        private MailerInterface $mailer,
+        #[Autowire(env: 'API_URL')]
+        private string $apiUrl
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -29,9 +32,9 @@ class AuthRegisterSubscriber implements EventSubscriberInterface
         $this->emailVerificationService->generateVerificationToken($user);
 
         // Construction de l'URL de vérification
-        // TODO: Utiliser FRONTEND_URL quand le frontend sera prêt
         $verificationUrl = sprintf(
-            'http://localhost:8000/api/auth/verify-email?token=%s',
+            '%s/api/auth/verify-email?token=%s',
+            $this->apiUrl,
             $user->getEmailVerificationToken()
         );
 

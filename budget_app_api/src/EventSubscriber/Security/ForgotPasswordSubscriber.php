@@ -6,11 +6,14 @@ use App\Event\ForgotPasswordEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class ForgotPasswordSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private MailerInterface $mailer,
+        #[Autowire(env: 'FRONTEND_URL')]
+        private string $frontendUrl
     )
     {
     }
@@ -25,9 +28,9 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
     {
        $user = $event->getUser();
         // Construction de l'URL vers le frontend
-        // TODO: Remplacer par une variable d'environnement FRONTEND_URL en production
         $resetUrl = sprintf(
-            'http://localhost:3000/reset-password?token=%s',
+            '%s/reset-password?token=%s',
+            $this->frontendUrl,
             $user->getPasswordResetToken()
         );
 
