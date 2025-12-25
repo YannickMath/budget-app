@@ -1,0 +1,62 @@
+security:
+    # Configures how passwords are hashed for security
+    password_hashers:
+        # Uses automatic algorithm (bcrypt or argon2) for all user classes
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: "auto" # Automatically selects best available algorithm
+            cost: 12 # Hash strength (higher = more secure but slower)
+
+    # Defines where to load users from (database, memory, etc.)
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User # User entity class
+                property: email # Property used as username/identifier
+
+    # Defines security zones and authentication methods
+    firewalls:
+        # Firewall for development tools (profiler, debug toolbar)
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/ # Matches dev tool URLs
+            security: false # Disables all security checks
+
+        # Firewall dedicated to handling login requests
+        login:
+            pattern: ^/api/login_check$ # Matches only /api/login_check
+            stateless: true # No session created (for JWT)
+            provider: app_user_provider # Uses app_user_provider to load users
+            user_checker: App\Security\UserChecker # Validates user status before auth
+            json_login:
+                check_path: /api/login_check # URL where login is processed
+                username_path: email # JSON field for email
+                password_path: password # JSON field for password
+                success_handler: lexik_jwt_authentication.handler.authentication_success # Returns JWT on success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure # Returns error on failure
+
+        # Main firewall for all API routes
+        api:
+            pattern: ^/api # Matches all URLs starting with /api
+            stateless: true # No session (REST API with JWT)
+            provider: app_user_provider # Uses app_user_provider to load users
+            user_checker: App\Security\UserChecker # Validates user status on each request
+            jwt: ~ # Enables JWT authentication from LexikJWTAuthenticationBundle
+
+    access_control:
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/logout, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            # Reduces hashing cost in tests for better performance
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Minimum bcrypt cost (fast for tests)
+                time_cost: 3 # Minimum argon2 time cost
+                memory_cost: 10 # Minimum argon2 memory cost

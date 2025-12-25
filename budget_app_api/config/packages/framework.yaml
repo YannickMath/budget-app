@@ -1,0 +1,34 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: "%env(APP_SECRET)%"
+
+    # Note that the session will be started ONLY if you read or write from it.
+    session: true
+
+    #esi: true
+    #fragments: true
+
+    rate_limiter:
+        # Rate limiter for authentication endpoints (login, register, forgot/reset password)
+        auth_endpoint:
+            policy: "sliding_window"
+            limit: 3
+            interval: "15 minutes"
+
+        # More strict rate limiter for login attempts
+        login:
+            policy: "sliding_window"
+            limit: 3
+            interval: "15 minutes"
+
+        # Rate limiter for password reset requests
+        password_reset:
+            policy: "sliding_window"
+            limit: 2
+            interval: "30 minutes"
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file
