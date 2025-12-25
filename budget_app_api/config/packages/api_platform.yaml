@@ -1,0 +1,18 @@
+api_platform:
+    title: Hello API Platform
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ["Content-Type", "Authorization", "Origin"]
+    formats:
+        json: ["application/json"]
+    error_formats:
+        json: ["application/json"]
+    swagger:
+        api_keys:
+            JWT:
+                name: Authorization
+                type: header
+        # swagger_ui_extra_configuration:
+        #     persist_authorization: true
