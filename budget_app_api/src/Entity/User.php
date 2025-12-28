@@ -2,7 +2,10 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Delete;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -12,11 +15,12 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
-use App\DTO\User\Input\UserUpdateInputDTO;
+use App\DTO\Admin\Input\AdminCreateUserInputDTO;
+use App\DTO\Admin\Input\AdminUpdateUserInputDTO;
 use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\Processor\User\UserCreateProcessor;
 use App\Processor\User\UserUpdateProcessor;
+use App\Processor\User\UserDeleteProcessor;
 use App\Provider\User\UserCollectionAttributesProvider;
 use App\Provider\User\UserAttributesProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -24,8 +28,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '`user`')]
-#[Gedmo\SoftDeleteable(fieldName: 'deleted_at', timeAware: false)]
+#[ORM\Table(name: '`users`')]
+#[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false)]
 // #[ApiResource()]
 #[Get(
     // uriTemplate: '/users/{publicId}',
@@ -51,28 +55,32 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
         AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
     ],
     processor: UserCreateProcessor::class,
-    input: UserRegistrationInputDTO::class,
+    input: AdminCreateUserInputDTO::class,
     output: UserAttributesOutputDTO::class,
     security: 'is_granted("ROLE_ADMIN")',
     securityMessage: 'Access denied.'
 )]
 #[Put(
-     denormalizationContext: [
+    denormalizationContext: [
         AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
     ],
     processor: UserUpdateProcessor::class,
-    input: UserUpdateInputDTO::class,
+    input: AdminUpdateUserInputDTO::class,
     output: UserAttributesOutputDTO::class,
     security: 'is_granted("ROLE_ADMIN")',
     securityMessage: 'Access denied.'
 )]
-
-
+#[Delete(
+    processor: UserDeleteProcessor::class,
+    security: 'is_granted("ROLE_ADMIN")',
+    securityMessage: 'Access denied.'
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public function __construct()
     {
         $this->publicId = Uuid::v4();
+        $this->emailChangeRequests = new ArrayCollection();
     }
     
     #[ORM\Id]
@@ -125,36 +133,45 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $avatarPath = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $email_verified_at = null;
+    private ?\DateTimeImmutable $emailVerifiedAt = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    private ?string $email_verification_token = null;
+    private ?string $emailVerificationToken = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $email_verification_token_expires_at = null;
+    private ?\DateTimeImmutable $emailVerificationTokenExpiresAt = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    private ?string $password_reset_token = null;
+    private ?string $passwordResetToken = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $password_reset_token_expires_at = null;
+    private ?\DateTimeImmutable $passwordResetTokenExpiresAt = null;
 
     #[ORM\Column(options: ['default' => true])]
-    private bool $is_active = true;
+    private bool $isActive = true;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $last_login_at = null;
+    private ?\DateTimeImmutable $lastLoginAt = null;
 
     #[ORM\Column]
     #[Gedmo\Timestampable(on: 'create')]
-    private ?\DateTimeImmutable $created_at = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     #[Gedmo\Timestampable(on: 'update')]
-    private ?\DateTimeImmutable $updated_at = null;
+    private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $deleted_at = null;
+    private ?\DateTimeImmutable $deletedAt = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $deletionReason = null;
+
+    /**
+     * @var Collection<int, EmailChangeRequest>
+     */
+    #[ORM\OneToMany(targetEntity: EmailChangeRequest::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $emailChangeRequests;
 
 
     public function getId(): ?int
@@ -271,124 +288,165 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getEmailVerifiedAt(): ?\DateTimeImmutable
     {
-        return $this->email_verified_at;
+        return $this->emailVerifiedAt;
     }
 
-    public function setEmailVerifiedAt(?\DateTimeImmutable $email_verified_at): static
+    public function setEmailVerifiedAt(?\DateTimeImmutable $emailVerifiedAt): static
     {
-        $this->email_verified_at = $email_verified_at;
+        $this->emailVerifiedAt = $emailVerifiedAt;
 
         return $this;
     }
 
     public function getEmailVerificationToken(): ?string
     {
-        return $this->email_verification_token;
+        return $this->emailVerificationToken;
     }
 
-    public function setEmailVerificationToken(?string $email_verification_token): static
+    public function setEmailVerificationToken(?string $emailVerificationToken): static
     {
-        $this->email_verification_token = $email_verification_token;
+        $this->emailVerificationToken = $emailVerificationToken;
 
         return $this;
     }
 
     public function getEmailVerificationTokenExpiresAt(): ?\DateTimeImmutable
     {
-        return $this->email_verification_token_expires_at;
+        return $this->emailVerificationTokenExpiresAt;
     }
 
-    public function setEmailVerificationTokenExpiresAt(?\DateTimeImmutable $email_verification_token_expires_at): static
+    public function setEmailVerificationTokenExpiresAt(?\DateTimeImmutable $emailVerificationTokenExpiresAt): static
     {
-        $this->email_verification_token_expires_at = $email_verification_token_expires_at;
+        $this->emailVerificationTokenExpiresAt = $emailVerificationTokenExpiresAt;
 
         return $this;
     }
 
     public function isEmailVerificationTokenValid(): bool
     {
-        if ($this->email_verification_token === null || $this->email_verification_token_expires_at === null) {
+        if ($this->emailVerificationToken === null || $this->emailVerificationTokenExpiresAt === null) {
             return false;
         }
 
-        return $this->email_verification_token_expires_at > new \DateTimeImmutable();
+        return $this->emailVerificationTokenExpiresAt > new \DateTimeImmutable();
     }
 
     public function getPasswordResetToken(): ?string
     {
-        return $this->password_reset_token;
+        return $this->passwordResetToken;
     }
 
-    public function setPasswordResetToken(?string $password_reset_token): static
+    public function setPasswordResetToken(?string $passwordResetToken): static
     {
-        $this->password_reset_token = $password_reset_token;
+        $this->passwordResetToken = $passwordResetToken;
 
         return $this;
     }
 
     public function getPasswordResetTokenExpiresAt(): ?\DateTimeImmutable
     {
-        return $this->password_reset_token_expires_at;
+        return $this->passwordResetTokenExpiresAt;
     }
 
-    public function setPasswordResetTokenExpiresAt(?\DateTimeImmutable $password_reset_token_expires_at): static
+    public function setPasswordResetTokenExpiresAt(?\DateTimeImmutable $passwordResetTokenExpiresAt): static
     {
-        $this->password_reset_token_expires_at = $password_reset_token_expires_at;
+        $this->passwordResetTokenExpiresAt = $passwordResetTokenExpiresAt;
 
         return $this;
     }
 
     public function isPasswordResetTokenValid(): bool
     {
-        if ($this->password_reset_token === null || $this->password_reset_token_expires_at === null) {
+        if ($this->passwordResetToken === null || $this->passwordResetTokenExpiresAt === null) {
             return false;
         }
 
-        return $this->password_reset_token_expires_at > new \DateTimeImmutable();
+        return $this->passwordResetTokenExpiresAt > new \DateTimeImmutable();
     }
 
     public function isActive(): ?bool
     {
-        return $this->is_active;
+        return $this->isActive;
     }
 
-    public function setIsActive(bool $is_active): static
+    public function setIsActive(bool $isActive): static
     {
-        $this->is_active = $is_active;
+        $this->isActive = $isActive;
 
         return $this;
     }
 
     public function getLastLoginAt(): ?\DateTimeImmutable
     {
-        return $this->last_login_at;
+        return $this->lastLoginAt;
     }
 
-    public function setLastLoginAt(?\DateTimeImmutable $last_login_at): static
+    public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
     {
-        $this->last_login_at = $last_login_at;
+        $this->lastLoginAt = $lastLoginAt;
 
         return $this;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
     public function getDeletedAt(): ?\DateTimeImmutable
     {
-        return $this->deleted_at;
+        return $this->deletedAt;
     }
 
-    public function setDeletedAt(\DateTimeImmutable $deleted_at): static
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static
     {
-        $this->deleted_at = $deleted_at;
+        $this->deletedAt = $deletedAt;
+
+        return $this;
+    }
+
+    public function getDeletionReason(): ?string
+    {
+        return $this->deletionReason;
+    }
+
+    public function setDeletionReason(?string $deletionReason): static
+    {
+        $this->deletionReason = $deletionReason;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, EmailChangeRequest>
+     */
+    public function getEmailChangeRequests(): Collection
+    {
+        return $this->emailChangeRequests;
+    }
+
+    public function addEmailChangeRequest(EmailChangeRequest $emailChangeRequest): static
+    {
+        if (!$this->emailChangeRequests->contains($emailChangeRequest)) {
+            $this->emailChangeRequests->add($emailChangeRequest);
+            $emailChangeRequest->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEmailChangeRequest(EmailChangeRequest $emailChangeRequest): static
+    {
+        if ($this->emailChangeRequests->removeElement($emailChangeRequest)) {
+            if ($emailChangeRequest->getUser() === $this) {
+                $emailChangeRequest->setUser(null);
+            }
+        }
 
         return $this;
     }

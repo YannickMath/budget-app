@@ -1,9 +1,12 @@
 <?php
 
-namespace App\DTO\Auth;
+namespace App\DTO\Auth\Input;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Data Transfer Object for reset password input
+ */
 class ResetPasswordInputDTO
 {
     #[Assert\NotBlank(message: 'Le nouveau mot de passe ne doit pas être vide.')]

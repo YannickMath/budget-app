@@ -45,11 +45,16 @@ security:
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/confirm-email-change, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
+        - {
+              path: ^/api/admin/users/\d+/desactivate,
+              roles: IS_AUTHENTICATED_FULLY,
+          }
         - { path: ^/api/logout, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

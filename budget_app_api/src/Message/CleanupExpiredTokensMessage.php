@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Message\Auth;
+namespace App\Message;
 
 class CleanupExpiredTokensMessage 
 {

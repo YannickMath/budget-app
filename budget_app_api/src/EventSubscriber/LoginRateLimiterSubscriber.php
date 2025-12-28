@@ -1,6 +1,6 @@
 <?php
 
-namespace App\EventListener;
+namespace App\EventSubscriber;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -8,7 +8,10 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Security\Http\Event\CheckPassportEvent;
 
-class LoginRateLimiterListener implements EventSubscriberInterface
+/**
+ * Event subscriber to limit login attempts using rate limiting
+ */
+class LoginRateLimiterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly RateLimiterFactoryInterface $loginLimiter,
@@ -33,7 +36,7 @@ class LoginRateLimiterListener implements EventSubscriberInterface
         $limiterKey = $request->getClientIp() ?? 'unknown';
 
         $limit = $this->loginLimiter->create($limiterKey);
-
+        ## consume method allows to check and consume tokens
         if (!$limit->consume(1)->isAccepted()) {
             throw new TooManyRequestsHttpException(
                 retryAfter: $limit->consume(1)->getRetryAfter()->getTimestamp() - time(),

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\EventSubscriber\Security;
+namespace App\EventSubscriber;
 
 use App\Event\ForgotPasswordEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -8,6 +8,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
+/**
+ * Event subscriber to handle forgot password email sending
+ */
 class ForgotPasswordSubscriber implements EventSubscriberInterface
 {
     public function __construct(

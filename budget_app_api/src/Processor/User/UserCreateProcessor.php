@@ -4,18 +4,18 @@ namespace App\Processor\User;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
+use App\DTO\Admin\Input\AdminCreateUserInputDTO;
 use App\Entity\User;
-use App\Service\User\UserService as UserUserService;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\Admin\AdminUserService;
 
 /**
- * Processor for creating new users
+ * Processor for admin creating new users
+ * Different from public registration - allows setting roles, verified status, etc.
  */
 class UserCreateProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly UserUserService $userService,
+        private readonly AdminUserService $adminUserService,
     ) {
     }
 
@@ -25,13 +25,11 @@ class UserCreateProcessor implements ProcessorInterface
         array $uriVariables = [],
         array $context = []): User
     {
-        if (!$data instanceof UserRegistrationInputDTO) {
-            throw new \InvalidArgumentException('Invalid input data: expected UserRegistrationInputDTO');
+        if (!$data instanceof AdminCreateUserInputDTO) {
+            throw new \InvalidArgumentException('Invalid input data: expected AdminCreateUserInputDTO');
         }
 
-        $tempUser = new User();
-
-        return $this->userService->createNewUser($data);
+        return $this->adminUserService->createUser($data);
     }
 
 }

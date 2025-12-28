@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO\RegistrationUser\Input;
+namespace App\DTO\Auth\Input;
 
 use App\Entity\User;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -16,8 +16,11 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
     message: 'This username is already taken.',
     entityClass: User::class
 )]
-class UserRegistrationInputDTO
-{       
+/**
+ * Data Transfer Object for user registration input
+ */
+class RegisterInputDTO
+{
     #[Assert\NotBlank]
     #[Assert\Email]
     #[Assert\Length(max: 180)]
@@ -30,11 +33,11 @@ class UserRegistrationInputDTO
     #[Assert\NotBlank]
     #[Assert\Length(min: 8, max: 30)]
     public string $password;
-    
+
     #[Assert\NotBlank]
     #[Assert\Timezone]
     public string $timezone = 'Europe/Paris';
-        
+
     #[Assert\Choice(choices: ['fr', 'en'])]
     public string $locale = 'fr';
 

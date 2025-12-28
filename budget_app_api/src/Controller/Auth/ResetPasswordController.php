@@ -2,8 +2,8 @@
 
 namespace App\Controller\Auth;
 
-use App\DTO\Auth\ResetPasswordInputDTO;
-use App\Service\Auth\ResetPasswordService;
+use App\DTO\Auth\Input\ResetPasswordInputDTO;
+use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,8 +21,8 @@ final class ResetPasswordController extends AbstractController
     use RateLimiterTrait;
 
     public function __construct(
-        private ResetPasswordService $resetPasswordService,
-        private RateLimiterFactoryInterface $passwordResetLimiter,
+        private readonly AuthService $authService,
+        private readonly RateLimiterFactoryInterface $passwordResetLimiter,
     ) {}
 
     #[Route('/api/auth/reset-password/validate', name: 'app_auth_validate_reset_token', methods: ['GET'])]
@@ -33,7 +33,7 @@ final class ResetPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $isValid = $this->resetPasswordService->validateToken($token);
+        $isValid = $this->authService->validatePasswordResetToken($token);
 
         if (!$isValid) {
             return $this->json([
@@ -57,7 +57,7 @@ final class ResetPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $this->resetPasswordService->resetPassword($token, $input);
+        $this->authService->resetPassword($token, $input);
 
         return $this->json(['message' => 'Le mot de passe a été réinitialisé avec succès.'], Response::HTTP_OK);
     }

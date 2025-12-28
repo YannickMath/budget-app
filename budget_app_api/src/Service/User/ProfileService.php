@@ -2,30 +2,50 @@
 
 namespace App\Service\User;
 
+use App\DTO\Profile\Input\UserProfileChangePasswordInputDTO;
+use App\DTO\Profile\Input\UserProfileEditInputDTO;
 use App\DTO\Profile\Output\ProfileAttributesOutputDTO;
+use App\Entity\EmailChangeRequest;
+use App\Entity\User;
+use App\Event\ChangeUserEmailEvent;
+use App\Event\PasswordChangedEvent;
+use App\Repository\EmailChangeRequestRepository;
 use App\Repository\UserRepository;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * Service to manage user profiles operations - self profile management
+ */
 class ProfileService
 {
     public function __construct(
-        private UserRepository $userRepository
+        private UserRepository $userRepository,
+        private EmailChangeRequestRepository $emailChangeRequestRepository,
+        private EventDispatcherInterface $dispatcher,
+        private UserService $userService,
     ) {}
-        
-    public function getProfileData($user): ProfileAttributesOutputDTO
-        {
-            
-            $dto = new ProfileAttributesOutputDTO(
-                username: $user->getDisplayName(),
-                avatarPath: $user->getAvatarPath(),
-                locale: $user->getLocale(),
-                timezone: $user->getTimezone(),
-                isActive: $user->isActive(),
-            );
-            
-            return $dto;
-        }
+    
+    /**
+     * Get user profile data for his profile
+     */
+    public function getProfileData(User $user): ProfileAttributesOutputDTO
+    {
+        $dto = new ProfileAttributesOutputDTO(
+            username: $user->getDisplayName(),
+            email: $user->getEmail(),
+            avatarPath: $user->getAvatarPath(),
+            locale: $user->getLocale(),
+            timezone: $user->getTimezone(),
+            isActive: $user->isActive(),
+        );
 
-    public function editProfile($user, $input): ProfileAttributesOutputDTO
+        return $dto;
+    }
+
+    /**
+     * Edit user profile for his own profile
+     */
+    public function editProfile(User $user, UserProfileEditInputDTO $input): ProfileAttributesOutputDTO
     {
         if ($input->username !== null && $input->username !== $user->getDisplayName()) {
             $user->setUsername($input->username);
@@ -49,18 +69,107 @@ class ProfileService
         return $this->getProfileData($user);
     }
 
-    public function changeEmail($user, $newEmail): void
+    /**
+     * Initiate user email change process for himself
+     */
+    public function changeEmail(User $user, string $newEmail): void
     {
-        // Implementation for changing email
+        $existingUser = $this->userRepository->findOneBy(['email' => $newEmail]);
+
+        if ($existingUser !== null && $existingUser->getId() !== $user->getId()) {
+            throw new \InvalidArgumentException('Impossible to proceed with this email.');
+        }
+
+        $token = bin2hex(random_bytes(32));
+        
+        $emailChangeRequest = new EmailChangeRequest();
+        $emailChangeRequest
+            ->setUser($user)
+            ->setOldEmail($user->getEmail())
+            ->setNewEmail($newEmail)
+            ->setToken($token)
+            ->setExpiresAt(new \DateTimeImmutable('+24 hours'));
+            
+        try{
+        $this->emailChangeRequestRepository->save($emailChangeRequest, true);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to initiate email change: ' . $e->getMessage());
+        }
+
+        $event = new ChangeUserEmailEvent($user, $emailChangeRequest);
+        $this->dispatcher->dispatch($event);
     }
 
-    public function changePassword($user, $newPassword): void
+    /**
+     * Change user password for himself
+     */
+    public function changePassword(User $user, UserProfileChangePasswordInputDTO $input): void
     {
-        // Implementation for changing password
+        if (!$this->userService->verifyPassword($user, $input->currentPassword)) {
+            throw new \InvalidArgumentException('Cannot proceed.');
+        }
+
+        $newHashedPassword = $this->userService->hashPassword($user, $input->newPassword);
+
+        $user->setPassword($newHashedPassword);
+        try {
+            $this->userRepository->save($user, true);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to change password: ' . $e->getMessage());
+        }
+
+        $event = new PasswordChangedEvent($user);
+        $this->dispatcher->dispatch($event);
     }
 
-    public function resendConfirmationEmail($user): void
+    /**
+     * Confirm email change with token
+     */
+    public function confirmEmailChange(string $token): ProfileAttributesOutputDTO
     {
-        // Implementation for resending confirmation email
-    }   
+        $emailChangeRequest = $this->emailChangeRequestRepository->findOneBy(['token' => $token]);
+        if (!$emailChangeRequest || $emailChangeRequest->getExpiresAt() < new \DateTimeImmutable()) {
+            throw new \InvalidArgumentException('Invalid or expired timming.');
+        }
+        if($emailChangeRequest->getConfirmedAt() ) {
+            $user = $emailChangeRequest->getUser();
+            return $this->getProfileData($user);
+        }
+
+        $user = $emailChangeRequest->getUser();
+        $user->setEmail($emailChangeRequest->getNewEmail());
+        $user->setEmailVerifiedAt(new \DateTimeImmutable());
+
+        ## Remove the email change request to track confirmed requests
+        // $user->removeEmailChangeRequest($emailChangeRequest);
+        try {
+        $this->userRepository->save($user, true);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to confirm email change: ' . $e->getMessage());
+        }
+
+        $emailChangeRequest->setConfirmedAt(new \DateTimeImmutable());
+        $this->emailChangeRequestRepository->save($emailChangeRequest, true);
+
+        return $this->getProfileData($user);
+    } 
+    
+    public function deleteAccount(User $user, string $password, ?string $reason = null): void
+    {
+        if (!$this->userService->verifyPassword($user, $password)) {
+            throw new \InvalidArgumentException('Invalid password provided.');
+        }
+
+        $user->setDeletedAt(new \DateTimeImmutable());
+        if ($reason !== null) {
+            $user->setDeletionReason($reason);
+        }
+
+        try {
+            $this->userRepository->save($user, true);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to delete account: ' . $e->getMessage());
+        }
+    }
+
 }

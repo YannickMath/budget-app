@@ -1,8 +1,8 @@
 <?php
 
-namespace App\MessageHandler\Auth;
+namespace App\MessageHandler;
 
-use App\Message\Auth\CleanupExpiredTokensMessage;
+use App\Message\CleanupExpiredTokensMessage;
 use App\Repository\UserRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;

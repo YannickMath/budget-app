@@ -3,10 +3,8 @@
 namespace App\DTO\Profile\Input;
 
 use App\Entity\User;
-use DateTimeInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Constraints\Date;
 
 #[UniqueEntity(
     fields: ['email'],
@@ -14,6 +12,9 @@ use Symfony\Component\Validator\Constraints\Date;
     entityClass: User::class
 )   ]
 
+/**
+ * Data Transfer Object for user profile edit input
+ */
 class UserProfileEditInputDTO
 {
     #[Assert\Email]

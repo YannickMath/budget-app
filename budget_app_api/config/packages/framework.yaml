@@ -27,6 +27,12 @@ framework:
             limit: 2
             interval: "30 minutes"
 
+        # Rale limiter for email change requests
+        email_change:
+            policy: "sliding_window"
+            limit: 2
+            interval: "30 minutes"
+
 when@test:
     framework:
         test: true

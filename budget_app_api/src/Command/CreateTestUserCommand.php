@@ -4,12 +4,12 @@ namespace App\Command;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\User\UserService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:create-test-user',
@@ -19,7 +19,7 @@ class CreateTestUserCommand extends Command
 {
     public function __construct(
         private UserRepository $userRepository,
-        private UserPasswordHasherInterface $passwordHasher
+        private UserService $userService
     ) {
         parent::__construct();
     }
@@ -30,7 +30,7 @@ class CreateTestUserCommand extends Command
 
         $email = 'test@example.com';
 
-        $existingUser = $this->userRepository->findOneBy(['email' => $email]);
+        $existingUser = $this->userService->findOneByEmail($email);
 
         if ($existingUser) {
             $io->warning("L'utilisateur {$email} existe déjà !");
@@ -46,7 +46,7 @@ class CreateTestUserCommand extends Command
         $user->setIsActive(true);
         $user->setEmailVerifiedAt(new \DateTimeImmutable()); // Email vérifié pour éviter le blocage
 
-        $hashedPassword = $this->passwordHasher->hashPassword($user, 'password123');
+        $hashedPassword = $this->userService->hashPassword($user, 'password123');
         $user->setPassword($hashedPassword);
 
         $this->userRepository->save($user, true);

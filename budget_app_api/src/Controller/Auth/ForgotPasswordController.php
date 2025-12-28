@@ -2,8 +2,8 @@
 
 namespace App\Controller\Auth;
 
-use App\DTO\Auth\ForgotPasswordInputDTO;
-use App\Service\Auth\ForgotPasswordService;
+use App\DTO\Auth\Input\ForgotPasswordInputDTO;
+use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,13 +12,14 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
+
 #[AsController]
 final class ForgotPasswordController extends AbstractController
 {
     use RateLimiterTrait;
 
     public function __construct(
-        private readonly ForgotPasswordService $forgotPasswordService,
+        private readonly AuthService $authService,
         private readonly RateLimiterFactoryInterface $passwordResetLimiter,
     ) {}
 
@@ -30,9 +31,8 @@ final class ForgotPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $this->forgotPasswordService->requestPasswordReset($input->email);
+        $this->authService->requestPasswordReset($input->email);
 
         return $this->json(["message" => "Si l'email existe, un lien de réinitialisation a été envoyé."], 200);
     }
-
 }
