@@ -29,8 +29,8 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
 
     public function onForgotPassword(ForgotPasswordEvent $event): void
     {
-       $user = $event->getUser();
-        // Construction de l'URL vers le frontend
+        $user = $event->getUser();
+        
         $resetUrl = sprintf(
             '%s/reset-password?token=%s',
             $this->frontendUrl,
@@ -51,7 +51,5 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
 
         $this->mailer->send($email);
 
+        }
     }
-    }
-
-   

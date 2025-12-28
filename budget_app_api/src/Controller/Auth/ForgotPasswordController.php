@@ -31,8 +31,8 @@ final class ForgotPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $this->authService->requestPasswordReset($input->email);
+        $response = $this->authService->requestPasswordReset($input->email);
 
-        return $this->json(["message" => "Si l'email existe, un lien de réinitialisation a été envoyé."], 200);
+        return $this->json($response, 200);
     }
 }

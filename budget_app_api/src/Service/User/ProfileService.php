@@ -2,8 +2,10 @@
 
 namespace App\Service\User;
 
+use App\DTO\Common\Output\MessageResponseOutputDTO;
 use App\DTO\Profile\Input\UserProfileChangePasswordInputDTO;
 use App\DTO\Profile\Input\UserProfileEditInputDTO;
+use App\DTO\Profile\Output\EmailChangedOutputDTO;
 use App\DTO\Profile\Output\ProfileAttributesOutputDTO;
 use App\Entity\EmailChangeRequest;
 use App\Entity\User;
@@ -72,8 +74,12 @@ class ProfileService
     /**
      * Initiate user email change process for himself
      */
-    public function changeEmail(User $user, string $newEmail): void
+    public function changeEmail(User $user, string $newEmail, string $password): MessageResponseOutputDTO
     {
+        if (!$this->userService->verifyPassword($user, $password)) {
+            throw new \InvalidArgumentException('Invalid password provided.');
+        }
+
         $existingUser = $this->userRepository->findOneBy(['email' => $newEmail]);
 
         if ($existingUser !== null && $existingUser->getId() !== $user->getId()) {
@@ -81,7 +87,7 @@ class ProfileService
         }
 
         $token = bin2hex(random_bytes(32));
-        
+
         $emailChangeRequest = new EmailChangeRequest();
         $emailChangeRequest
             ->setUser($user)
@@ -89,7 +95,7 @@ class ProfileService
             ->setNewEmail($newEmail)
             ->setToken($token)
             ->setExpiresAt(new \DateTimeImmutable('+24 hours'));
-            
+
         try{
         $this->emailChangeRequestRepository->save($emailChangeRequest, true);
         } catch (\Exception $e) {
@@ -98,12 +104,16 @@ class ProfileService
 
         $event = new ChangeUserEmailEvent($user, $emailChangeRequest);
         $this->dispatcher->dispatch($event);
+
+        return new MessageResponseOutputDTO(
+            message: 'A confirmation email has been sent to your new email address.'
+        );
     }
 
     /**
      * Change user password for himself
      */
-    public function changePassword(User $user, UserProfileChangePasswordInputDTO $input): void
+    public function changePassword(User $user, UserProfileChangePasswordInputDTO $input): MessageResponseOutputDTO
     {
         if (!$this->userService->verifyPassword($user, $input->currentPassword)) {
             throw new \InvalidArgumentException('Cannot proceed.');
@@ -120,12 +130,16 @@ class ProfileService
 
         $event = new PasswordChangedEvent($user);
         $this->dispatcher->dispatch($event);
+
+        return new MessageResponseOutputDTO(
+            message: 'Your password has been changed successfully. A confirmation email has been sent.'
+        );
     }
 
     /**
      * Confirm email change with token
      */
-    public function confirmEmailChange(string $token): ProfileAttributesOutputDTO
+    public function confirmEmailChange(string $token): EmailChangedOutputDTO
     {
         $emailChangeRequest = $this->emailChangeRequestRepository->findOneBy(['token' => $token]);
         if (!$emailChangeRequest || $emailChangeRequest->getExpiresAt() < new \DateTimeImmutable()) {
@@ -133,11 +147,15 @@ class ProfileService
         }
         if($emailChangeRequest->getConfirmedAt() ) {
             $user = $emailChangeRequest->getUser();
-            return $this->getProfileData($user);
+            return new EmailChangedOutputDTO(
+                message: 'Your new email has been confirmed.',
+                email: $user->getEmail()
+            );
         }
 
         $user = $emailChangeRequest->getUser();
-        $user->setEmail($emailChangeRequest->getNewEmail());
+        $newEmail = $emailChangeRequest->getNewEmail();
+        $user->setEmail($newEmail);
         $user->setEmailVerifiedAt(new \DateTimeImmutable());
 
         ## Remove the email change request to track confirmed requests
@@ -151,10 +169,13 @@ class ProfileService
         $emailChangeRequest->setConfirmedAt(new \DateTimeImmutable());
         $this->emailChangeRequestRepository->save($emailChangeRequest, true);
 
-        return $this->getProfileData($user);
+        return new EmailChangedOutputDTO(
+            message: 'Your new email has been confirmed.',
+            email: $newEmail
+        );
     } 
     
-    public function deleteAccount(User $user, string $password, ?string $reason = null): void
+    public function deleteAccount(User $user, string $password, ?string $reason = null): MessageResponseOutputDTO
     {
         if (!$this->userService->verifyPassword($user, $password)) {
             throw new \InvalidArgumentException('Invalid password provided.');
@@ -170,6 +191,10 @@ class ProfileService
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to delete account: ' . $e->getMessage());
         }
+
+        return new MessageResponseOutputDTO(
+            message: 'Your account has been successfully deleted.'
+        );
     }
 
 }

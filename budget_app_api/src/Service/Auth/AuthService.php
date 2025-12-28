@@ -4,6 +4,8 @@ namespace App\Service\Auth;
 
 use App\DTO\Auth\Input\ResetPasswordInputDTO;
 use App\DTO\Auth\Input\RegisterInputDTO;
+use App\DTO\Auth\Output\EmailVerifiedOutputDTO;
+use App\DTO\Common\Output\MessageResponseOutputDTO;
 use App\Entity\User;
 
 /**
@@ -38,17 +40,17 @@ class AuthService
     /**
      * Verify user's email with token
      */
-    public function verifyEmail(string $token): void
+    public function verifyEmail(string $token): EmailVerifiedOutputDTO
     {
-        $this->emailVerificationService->verifyToken($token);
+        return $this->emailVerificationService->verifyToken($token);
     }
 
     /**
      * Request a password reset (sends email with token)
      */
-    public function requestPasswordReset(string $email): void
+    public function requestPasswordReset(string $email): MessageResponseOutputDTO
     {
-        $this->forgotPasswordService->requestPasswordReset($email);
+        return $this->forgotPasswordService->requestPasswordReset($email);
     }
 
     /**
@@ -62,8 +64,8 @@ class AuthService
     /**
      * Reset password using token
      */
-    public function resetPassword(string $token, ResetPasswordInputDTO $input): void
+    public function resetPassword(string $token, ResetPasswordInputDTO $input): MessageResponseOutputDTO
     {
-        $this->resetPasswordService->resetPassword($token, $input);
+        return $this->resetPasswordService->resetPassword($token, $input);
     }
 }

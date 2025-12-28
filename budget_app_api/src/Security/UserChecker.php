@@ -16,12 +16,6 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
-        if ($user->getEmailVerifiedAt() === null) {
-            throw new CustomUserMessageAccountStatusException(
-                'Votre adresse email n\'a pas été vérifiée. Veuillez consulter votre boîte mail pour activer votre compte.'
-            );
-        }
-
         if ($user->getDeletedAt() !== null) {
             throw new CustomUserMessageAccountStatusException(
                 'Votre compte a été supprimé. Veuillez contacter le support pour plus d\'informations.'
@@ -41,6 +35,5 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
-        // Vérifications supplémentaires après authentification si nécessaire
     }
 }

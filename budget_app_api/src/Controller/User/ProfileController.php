@@ -2,7 +2,6 @@
 
 namespace App\Controller\User;
 
-use App\DTO\Profile\Input\UserChangeEmailInputDTO;
 use App\DTO\Profile\Input\UserProfileChangeEmailInputDTO;
 use App\DTO\Profile\Input\UserProfileChangePasswordInputDTO;
 use App\DTO\Profile\Input\UserProfileConfirmEmailInputDTO;
@@ -49,42 +48,42 @@ final class ProfileController extends AbstractController
     public function editProfile(#[MapRequestPayload()] UserProfileEditInputDTO $input): JsonResponse
     {
         $user = $this->getUser();
-        
+
         try {
             $updatedProfileData = $this->profileService->editProfile($user, $input);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to update profile: " . $e->getMessage()], 400);
         }
-        
-        return $this->json(["message" => "votre profil a été mis à jour", "data" => $updatedProfileData], 200);
+
+        return $this->json($updatedProfileData, 200);
     }
 
     #[Route('/api/profile/me/change-email', name: 'app_user_change_email', methods: ['POST'])]
     public function changeEmail(#[MapRequestPayload()] UserProfileChangeEmailInputDTO $input, Request $request): JsonResponse
     {
         $this->applyRateLimit($this->emailChangeLimiter, $request);
-        
+
         $user = $this->getUser();
 
         try {
-            $this->profileService->changeEmail($user, $input->new_email);
+            $response = $this->profileService->changeEmail($user, $input->new_email, $input->password);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to change email: " . $e->getMessage()], 400);
         }
 
-        return $this->json(["message" => "A confirmation email has been sent to your new email address."], 200);
+        return $this->json($response, 200);
     }
 
     #[Route('/api/profile/me/confirmation-new-email', name: 'app_user_resend_confirmation_new_email', methods: ['POST'])]
     public function resendConfirmationEmail(#[MapRequestPayload()] UserProfileConfirmEmailInputDTO $input): JsonResponse
     {
         try {
-            $this->profileService->confirmEmailChange($input->token);
+            $response = $this->profileService->confirmEmailChange($input->token);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to resend confirmation email: " . $e->getMessage()], 400);
         }
 
-        return $this->json(["message" => "Your new email has been confirmed.", "data" => $this->profileService->getProfileData($this->getUser())], 200);
+        return $this->json($response, 200);
     }
 
     #[Route('/api/profile/me/change-password', name: 'app_user_change_password', methods: ['POST'])]
@@ -92,11 +91,11 @@ final class ProfileController extends AbstractController
     {
         $user = $this->getUser();
         try {
-            $this->profileService->changePassword($user, $input);
+            $response = $this->profileService->changePassword($user, $input);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to change password: " . $e->getMessage()], 400);
         }
-        return $this->json(["message" => "Your password has been changed successfully. A confirmation email has been sent."], 200);
+        return $this->json($response, 200);
     }
 
     #[Route('/api/profile/me/delete-account', name: 'app_user_delete_account', methods: ['DELETE'])]
@@ -104,11 +103,11 @@ final class ProfileController extends AbstractController
     {
         $user = $this->getUser();
         try {
-            $this->profileService->deleteAccount($user, $input->password, $input->reason);
+            $response = $this->profileService->deleteAccount($user, $input->password, $input->reason);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to delete account: " . $e->getMessage()], 400);
         }
-        return $this->json(["message" => "Your account has been successfully deleted."], 200);
+        return $this->json($response, 200);
     }
 
 }

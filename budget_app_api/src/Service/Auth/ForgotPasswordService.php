@@ -2,6 +2,7 @@
 
 namespace App\Service\Auth;
 
+use App\DTO\Common\Output\MessageResponseOutputDTO;
 use App\Entity\User;
 use App\Event\ForgotPasswordEvent;
 use App\Repository\UserRepository;
@@ -23,16 +24,21 @@ class ForgotPasswordService
     /**
      * Request a password reset for the given email
      */
-    public function requestPasswordReset(string $email): void
+    public function requestPasswordReset(string $email): MessageResponseOutputDTO
     {
 
         $user = $this->userService->findOneByEmail($email);
         if (!$user || !$user->isActive()) {
-            return;
+            return new MessageResponseOutputDTO(
+                message: "Si l'email existe, un lien de réinitialisation a été envoyé."
+            );
         }
 
         $this->generatePasswordResetToken($user);
 
+        return new MessageResponseOutputDTO(
+            message: "Si l'email existe, un lien de réinitialisation a été envoyé."
+        );
     }
 
     /**

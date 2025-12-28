@@ -2,6 +2,7 @@
 
 namespace App\Controller\Auth;
 
+use App\DTO\Auth\Output\EmailVerifiedOutputDTO;
 use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,11 +30,8 @@ final class VerifyEmailController extends AbstractController
     ): JsonResponse {
         $this->applyRateLimit($this->authEndpointLimiter, $request);
 
-        $this->authService->verifyEmail($token);
+        $response = $this->authService->verifyEmail($token);
 
-        return $this->json([
-            'success' => true,
-            'message' => 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.'
-        ]);
+        return $this->json($response);
     }
 }

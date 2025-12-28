@@ -40,7 +40,7 @@ class ChangeUserEmailSubscriber implements EventSubscriberInterface
         );
 
         $email = (new TemplatedEmail())
-            ->from('no-reply@budgetapp.com')
+            ->from('noreply@budget-app.com')
             ->to($changeEmailRequest->getNewEmail())
             ->subject('Confirmez votre changement d\'adresse e-mail - Budget App')
             ->htmlTemplate('user/profile/change_email.html.twig')

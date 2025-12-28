@@ -3,8 +3,11 @@
 namespace App\Controller\Auth;
 
 use App\DTO\Auth\Input\RegisterInputDTO;
+use App\DTO\Auth\Output\AuthResponseOutputDTO;
+use App\DTO\Auth\Output\UserOutputDTO;
 use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,6 +24,7 @@ final class RegisterController extends AbstractController
     public function __construct(
         private readonly AuthService $authService,
         private readonly RateLimiterFactoryInterface $authEndpointLimiter,
+        private readonly JWTTokenManagerInterface $jwtManager,
     ) {}
 
     #[Route('/api/auth/register', name: 'app_auth_register', methods: ['POST'])]
@@ -31,10 +35,15 @@ final class RegisterController extends AbstractController
     {
         $this->applyRateLimit($this->authEndpointLimiter, $request);
 
-        $this->authService->register($input);
+        $user = $this->authService->register($input);
 
-        return $this->json([
-            'message' => 'User registered successfully',
-        ], 201);
+        $token = $this->jwtManager->create($user);
+
+        $response = new AuthResponseOutputDTO(
+            token: $token,
+            user: UserOutputDTO::fromEntity($user)
+        );
+
+        return $this->json($response, 201);
     }
 }

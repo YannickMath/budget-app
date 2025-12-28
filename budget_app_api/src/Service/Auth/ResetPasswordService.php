@@ -3,6 +3,7 @@
 namespace App\Service\Auth;
 
 use App\DTO\Auth\Input\ResetPasswordInputDTO;
+use App\DTO\Common\Output\MessageResponseOutputDTO;
 use App\Repository\UserRepository;
 use App\Service\User\UserService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -30,10 +31,10 @@ class ResetPasswordService
     /**
      * Reset the user's password using the provided token and input data
      */
-    public function resetPassword(string $token, ResetPasswordInputDTO $input): void
+    public function resetPassword(string $token, ResetPasswordInputDTO $input): MessageResponseOutputDTO
     {
         $user = $this->userRepository->findOneBy(['password_reset_token' => $token]);
-        
+
         if (!$user || !$user->isPasswordResetTokenValid() || !$user->isActive()) {
             throw new BadRequestHttpException('Invalid or expired token.');
         }
@@ -48,5 +49,9 @@ class ResetPasswordService
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to reset password: ' . $e->getMessage());
         }
+
+        return new MessageResponseOutputDTO(
+            message: 'Le mot de passe a été réinitialisé avec succès.'
+        );
     }
 }

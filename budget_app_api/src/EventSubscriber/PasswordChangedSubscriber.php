@@ -28,7 +28,7 @@ class PasswordChangedSubscriber implements EventSubscriberInterface
         $user = $event->getUser();
 
         $email = (new TemplatedEmail())
-            ->from('security@budgetapp.com')
+            ->from('noreply@budget-app.com')
             ->to($user->getEmail())
             ->subject('Votre mot de passe a été modifié - Budget App')
             ->htmlTemplate('emails/password_changed.html.twig')

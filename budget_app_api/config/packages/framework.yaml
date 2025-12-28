@@ -9,13 +9,13 @@ framework:
     #fragments: true
 
     rate_limiter:
-        # Rate limiter for authentication endpoints (login, register, forgot/reset password)
+        # Rate limiter for authentication endpoints (register, verify-email, resend-verification)
         auth_endpoint:
             policy: "sliding_window"
             limit: 3
             interval: "15 minutes"
 
-        # More strict rate limiter for login attempts
+        # Rate limiter specifically for login attempts (separate quota from other auth endpoints)
         login:
             policy: "sliding_window"
             limit: 3
@@ -27,7 +27,7 @@ framework:
             limit: 2
             interval: "30 minutes"
 
-        # Rale limiter for email change requests
+        # Rate limiter for email change requests
         email_change:
             policy: "sliding_window"
             limit: 2

@@ -57,8 +57,8 @@ final class ResetPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $this->authService->resetPassword($token, $input);
+        $response = $this->authService->resetPassword($token, $input);
 
-        return $this->json(['message' => 'Le mot de passe a été réinitialisé avec succès.'], Response::HTTP_OK);
+        return $this->json($response, Response::HTTP_OK);
     }
 }
