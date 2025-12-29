@@ -38,8 +38,11 @@ security:
             pattern: ^/api # Matches all URLs starting with /api
             stateless: true # No session (REST API with JWT)
             provider: app_user_provider # Uses app_user_provider to load users
+            entry_point: jwt # Redirects to JWT auth on unauthenticated access
             user_checker: App\Security\UserChecker # Validates user status on each request
             jwt: ~ # Enables JWT authentication from LexikJWTAuthenticationBundle
+            refresh_jwt:
+                check_path: /api/token/refresh # URL to refresh JWT tokens
 
     access_control:
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
@@ -49,6 +52,7 @@ security:
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - {
               path: ^/api/admin/users/\d+/desactivate,
               roles: IS_AUTHENTICATED_FULLY,

@@ -7,8 +7,11 @@ use App\DTO\Auth\Output\AuthResponseOutputDTO;
 use App\DTO\Auth\Output\UserOutputDTO;
 use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -25,6 +28,10 @@ final class RegisterController extends AbstractController
         private readonly AuthService $authService,
         private readonly RateLimiterFactoryInterface $authEndpointLimiter,
         private readonly JWTTokenManagerInterface $jwtManager,
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        private readonly RefreshTokenManagerInterface $refreshTokenManager,
+        #[Autowire(param: 'gesdinet_jwt_refresh_token.ttl')]
+        private readonly int $refreshTokenTtl,
     ) {}
 
     #[Route('/api/auth/register', name: 'app_auth_register', methods: ['POST'])]
@@ -37,13 +44,22 @@ final class RegisterController extends AbstractController
 
         $user = $this->authService->register($input);
 
+        // Generate JWT token
         $token = $this->jwtManager->create($user);
 
-        $response = new AuthResponseOutputDTO(
-            token: $token,
-            user: UserOutputDTO::fromEntity($user)
+        // Generate refresh token (using TTL from config)
+        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl(
+            $user,
+            (new \DateTime())->modify("+{$this->refreshTokenTtl} seconds")->getTimestamp()
         );
+        $this->refreshTokenManager->save($refreshToken);
 
-        return $this->json($response, 201);
+        $responseData = [
+            'token' => $token,
+            'refresh_token' => $refreshToken->getRefreshToken(),
+            'user' => UserOutputDTO::fromEntity($user),
+        ];
+
+        return $this->json($responseData, 201);
     }
 }
