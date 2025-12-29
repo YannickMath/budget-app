@@ -43,9 +43,9 @@ class RegistrationService
             $event = new RegisterSuccessEvent($user);
             $this->dispatcher->dispatch($event);
         } catch (UniqueConstraintViolationException $e) {
-            throw new UnprocessableEntityHttpException('Cet email ou nom d\'utilisateur est déjà utilisé');
+            throw new UnprocessableEntityHttpException('This email or username is already in use.');
         } catch (Exception $e) {
-            throw new RuntimeException('Erreur lors de l\'enregistrement de l\'utilisateur: ' . $e->getMessage());
+            throw new RuntimeException('Failed to register user: ' . $e->getMessage());
         }
 
         return $user;

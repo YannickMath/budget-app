@@ -51,7 +51,7 @@ class EmailVerificationService
 
         if ($user->getEmailVerifiedAt() !== null) {
             return new EmailVerifiedOutputDTO(
-                message: 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.',
+                message: 'Email successfully verified! You can now log in.',
                 emailVerified: true
             );
         }
@@ -71,7 +71,7 @@ class EmailVerificationService
         }
 
         return new EmailVerifiedOutputDTO(
-            message: 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.',
+            message: 'Email successfully verified! You can now log in.',
             emailVerified: true
         );
     }

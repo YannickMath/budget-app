@@ -10,7 +10,7 @@ use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 /**
  * Event subscriber to handle actions on successful login
  */
-class AuthLoginSubscriber implements EventSubscriberInterface
+final class AuthLoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private UserRepository $userRepository,

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email Address Changed</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2c3e50;">Email Address Changed</h2>
+
+        <p>Hello <strong>{{ username }}</strong>,</p>
+
+        <p>We are informing you that the email address associated with your account was changed on <strong>{{ changedAt|date('m/d/Y at h:i A') }}</strong>.</p>
+
+        <div style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Change made:</strong></p>
+            <p style="margin: 10px 0 0 0;">
+                <strong>Old address:</strong> {{ oldEmail }}<br>
+                <strong>New address:</strong> {{ newEmail }}
+            </p>
+        </div>
+
+        <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;">✅ If you made this change, you can safely ignore this email.</p>
+            <p style="margin: 10px 0 0 0;">Your future notifications will be sent to your new address: <strong>{{ newEmail }}</strong></p>
+        </div>
+
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; font-weight: bold;">⚠️ Did not change your email address?</p>
+            <p style="margin: 10px 0 0 0;">
+                If you did not make this change, your account may have been compromised.
+                Immediately contact our support at <a href="mailto:support@budget-app.com">support@budget-app.com</a>
+            </p>
+        </div>
+
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+            This email was sent automatically for security reasons.<br>
+            This email was sent to your old address to inform you of the change.<br>
+            Budget App - Simplified budget management
+        </p>
+    </div>
+</body>
+</html>

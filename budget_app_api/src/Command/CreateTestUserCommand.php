@@ -2,7 +2,9 @@
 
 namespace App\Command;
 
+use App\Config\AppConfig;
 use App\Entity\User;
+use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use App\Service\User\UserService;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -13,9 +15,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:create-test-user',
-    description: 'Crée un utilisateur de test',
+    description: 'Creates a test user',
 )]
-class CreateTestUserCommand extends Command
+final class CreateTestUserCommand extends Command
 {
     public function __construct(
         private UserRepository $userRepository,
@@ -33,16 +35,16 @@ class CreateTestUserCommand extends Command
         $existingUser = $this->userService->findOneByEmail($email);
 
         if ($existingUser) {
-            $io->warning("L'utilisateur {$email} existe déjà !");
+            $io->warning("User {$email} already exists!");
             return Command::FAILURE;
         }
 
         $user = new User();
         $user->setEmail($email);
         $user->setUsername('testuser');
-        $user->setTimezone('Europe/Paris');
-        $user->setLocale('fr');
-        $user->setRoles(['ROLE_USER']);
+        $user->setTimezone(AppConfig::DEFAULT_TIMEZONE);
+        $user->setLocale(AppConfig::DEFAULT_LOCALE);
+        $user->setRoles([UserRole::USER]);
         $user->setIsActive(true);
         $user->setEmailVerifiedAt(new \DateTimeImmutable()); // Email vérifié pour éviter le blocage
 
@@ -52,7 +54,7 @@ class CreateTestUserCommand extends Command
         $this->userRepository->save($user, true);
 
         $io->success(sprintf(
-            'Utilisateur de test créé avec succès !' . PHP_EOL .
+            'Test user created successfully!' . PHP_EOL .
             'Email: %s' . PHP_EOL .
             'Password: password123' . PHP_EOL .
             'ID: %d',

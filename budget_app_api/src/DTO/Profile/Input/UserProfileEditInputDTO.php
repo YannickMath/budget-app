@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Data Transfer Object for user profile edit input
  * Note: Email changes must use the dedicated changeEmail endpoint with confirmation
  */
-class UserProfileEditInputDTO
+final class UserProfileEditInputDTO
 {
     #[Assert\Length(min: 3, max: 50)]
     public  ?string $username = null;

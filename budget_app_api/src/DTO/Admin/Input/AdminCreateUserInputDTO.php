@@ -2,13 +2,15 @@
 
 namespace App\DTO\Admin\Input;
 
+use App\Config\AppConfig;
+use App\Enum\UserRole;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * DTO for admin user creation
  * Different from public registration - allows setting roles, verified status, etc.
  */
-class AdminCreateUserInputDTO
+final class AdminCreateUserInputDTO
 {
     #[Assert\NotBlank(message: 'Email is required')]
     #[Assert\Email(message: 'Invalid email address')]
@@ -25,13 +27,13 @@ class AdminCreateUserInputDTO
 
     #[Assert\NotBlank]
     #[Assert\Timezone]
-    public string $timezone = 'Europe/Paris';
+    public string $timezone = AppConfig::DEFAULT_TIMEZONE;
 
-    #[Assert\Choice(choices: ['fr', 'en'])]
-    public string $locale = 'fr';
+    #[Assert\Choice(choices: AppConfig::AVAILABLE_LOCALES)]
+    public string $locale = AppConfig::DEFAULT_LOCALE;
 
     #[Assert\NotBlank]
-    public array $roles = ['ROLE_USER'];
+    public array $roles = [UserRole::USER];
 
     /**
      * Admin can create users with pre-verified email

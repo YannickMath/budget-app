@@ -33,6 +33,18 @@ framework:
             limit: 2
             interval: "30 minutes"
 
+        # Rate limiter for password change requests
+        password_change:
+            policy: "sliding_window"
+            limit: 5
+            interval: "30 minutes"
+
+        # Rate limiter for account deletion requests
+        account_deletion:
+            policy: "sliding_window"
+            limit: 2
+            interval: "1 hour"
+
 when@test:
     framework:
         test: true

@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Config\EmailConfig;
 use App\Event\ForgotPasswordEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -11,7 +12,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Event subscriber to handle forgot password email sending
  */
-class ForgotPasswordSubscriber implements EventSubscriberInterface
+final class ForgotPasswordSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private MailerInterface $mailer,
@@ -38,15 +39,15 @@ class ForgotPasswordSubscriber implements EventSubscriberInterface
         );
 
         $email = (new TemplatedEmail())
-            ->from('noreply@budget-app.com')
+            ->from(EmailConfig::NOREPLY_EMAIL)
             ->to($user->getEmail())
-            ->subject('Réinitialisez votre mot de passe - Budget App')
+            ->subject(EmailConfig::SUBJECT_PASSWORD_RESET)
             ->htmlTemplate('emails/forgot_password.html.twig')
             ->locale($user->getLocale())
             ->context([
-                'reset_url' => $resetUrl,
+                'resetUrl' => $resetUrl,
                 'username' => $user->getDisplayName(),
-                'expiration_date' => $user->getPasswordResetTokenExpiresAt(),
+                'expirationDate' => $user->getPasswordResetTokenExpiresAt(),
             ]);
 
         $this->mailer->send($email);

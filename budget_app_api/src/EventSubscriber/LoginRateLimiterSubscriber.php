@@ -11,7 +11,7 @@ use Symfony\Component\Security\Http\Event\CheckPassportEvent;
 /**
  * Event subscriber to limit login attempts using rate limiting
  */
-class LoginRateLimiterSubscriber implements EventSubscriberInterface
+final class LoginRateLimiterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly RateLimiterFactoryInterface $loginLimiter,
@@ -40,7 +40,7 @@ class LoginRateLimiterSubscriber implements EventSubscriberInterface
         if (!$limit->consume(1)->isAccepted()) {
             throw new TooManyRequestsHttpException(
                 retryAfter: $limit->consume(1)->getRetryAfter()->getTimestamp() - time(),
-                message: 'Trop de tentatives de connexion. Veuillez réessayer plus tard.'
+                message: 'Too many login attempts. Please try again later.'
             );
         }
     }

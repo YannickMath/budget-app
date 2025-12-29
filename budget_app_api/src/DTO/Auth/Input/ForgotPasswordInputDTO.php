@@ -8,9 +8,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Data Transfer Object for forgot password input
  */
-class ForgotPasswordInputDTO
+final class ForgotPasswordInputDTO
 {
-    #[Email(message: 'L\'email {{ value }} n\'est pas un email valide.')]
-    #[Assert\NotBlank(message: 'L\'email ne doit pas être vide.')]
+    #[Assert\NotBlank(message: 'Email must not be blank.')]
+    #[Email(message: 'The email "{{ value }}" is not a valid email address.')]
+    #[Assert\Length(max: 180)]
     public ?string $email;
 }

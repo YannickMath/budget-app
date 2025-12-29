@@ -2,7 +2,9 @@
 
 namespace App\DTO\Auth\Input;
 
+use App\Config\AppConfig;
 use App\Entity\User;
+use App\Enum\UserRole;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
@@ -19,7 +21,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 /**
  * Data Transfer Object for user registration input
  */
-class RegisterInputDTO
+final class RegisterInputDTO
 {
     #[Assert\NotBlank]
     #[Assert\Email]
@@ -36,11 +38,11 @@ class RegisterInputDTO
 
     #[Assert\NotBlank]
     #[Assert\Timezone]
-    public string $timezone = 'Europe/Paris';
+    public string $timezone = AppConfig::DEFAULT_TIMEZONE;
 
-    #[Assert\Choice(choices: ['fr', 'en'])]
-    public string $locale = 'fr';
+    #[Assert\Choice(choices: AppConfig::AVAILABLE_LOCALES)]
+    public string $locale = AppConfig::DEFAULT_LOCALE;
 
     #[Assert\NotBlank()]
-    public array $roles = ['ROLE_USER'];
+    public array $roles = [UserRole::USER];
 }

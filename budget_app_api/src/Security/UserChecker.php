@@ -8,7 +8,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAccountStatusExce
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-class UserChecker implements UserCheckerInterface
+final class UserChecker implements UserCheckerInterface
 {
     public function checkPreAuth(UserInterface $user): void
     {
@@ -18,13 +18,13 @@ class UserChecker implements UserCheckerInterface
 
         if ($user->getDeletedAt() !== null) {
             throw new CustomUserMessageAccountStatusException(
-                'Votre compte a été supprimé. Veuillez contacter le support pour plus d\'informations.'
+                'Your account has been deleted. Please contact support for more information.'
             );
         }
 
         if (!$user->isActive()) {
             throw new CustomUserMessageAccountStatusException(
-                'Votre compte a été désactivé. Veuillez contacter le support.'
+                'Your account has been deactivated. Please contact support.'
             );
         }
     }

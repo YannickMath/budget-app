@@ -11,5 +11,6 @@ readonly class EmailChangedOutputDTO
     public function __construct(
         public string $message,
         public string $email,
+        public bool $shouldLogout = false,
     ) {}
 }

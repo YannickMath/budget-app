@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Delete;
+use App\Config\AppConfig;
+use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -39,40 +41,45 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
     //         identifiers: ['publicId']
     //     )
     // ],
+    uriTemplate: '/admin/users/{id}',
     provider: UserAttributesProvider::class,
     output: UserAttributesOutputDTO::class,
-    security: 'is_granted("ROLE_ADMIN")',
+    security: 'is_granted("' . UserRole::ADMIN . '")',
     securityMessage: 'Access denied.'
 )]
 #[GetCollection(
+    uriTemplate: '/admin/users',
     provider: UserCollectionAttributesProvider::class,
     output: UserAttributesOutputDTO::class,
-    security: 'is_granted("ROLE_ADMIN")',
+    security: 'is_granted("' . UserRole::ADMIN . '")',
     securityMessage: 'Access denied.'
 )]
 #[Post(
+    uriTemplate: '/admin/users/{id}',
     denormalizationContext: [
         AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
     ],
     processor: UserCreateProcessor::class,
     input: AdminCreateUserInputDTO::class,
     output: UserAttributesOutputDTO::class,
-    security: 'is_granted("ROLE_ADMIN")',
+    security: 'is_granted("' . UserRole::ADMIN . '")',
     securityMessage: 'Access denied.'
 )]
 #[Put(
+    uriTemplate: '/admin/users/{id}',
     denormalizationContext: [
         AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false
     ],
     processor: UserUpdateProcessor::class,
     input: AdminUpdateUserInputDTO::class,
     output: UserAttributesOutputDTO::class,
-    security: 'is_granted("ROLE_ADMIN")',
+    security: 'is_granted("' . UserRole::ADMIN . '")',
     securityMessage: 'Access denied.'
 )]
 #[Delete(
+    uriTemplate: '/admin/users/{id}',
     processor: UserDeleteProcessor::class,
-    security: 'is_granted("ROLE_ADMIN")',
+    security: 'is_granted("' . UserRole::ADMIN . '")',
     securityMessage: 'Access denied.'
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -93,36 +100,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Uuid $publicId = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Assert\NotBlank(message: 'Email obligatoire')]
-    #[Assert\Email(message: 'Email invalide')]
+    #[Assert\NotBlank(message: 'Email is required')]
+    #[Assert\Email(message: 'Invalid email')]
     private ?string $email = null;
 
     #[ORM\Column(length: 50, unique: true)]
-    #[Assert\NotBlank(message: 'Nom d\'utilisateur obligatoire')]
+    #[Assert\NotBlank(message: 'Username is required')]
     #[Assert\Length(
         min: 3,
-        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères',
+        minMessage: 'Username must be at least {{ limit }} characters long',
         max: 50,
-        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères'
+        maxMessage: 'Username cannot exceed {{ limit }} characters'
     )]
     private ?string $username = null;
 
     #[ORM\Column]
-    #[Assert\NotBlank(message: 'Mot de passe obligatoire')]
+    #[Assert\NotBlank(message: 'Password is required')]
     #[Assert\Length(
         min: 8,
-        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères',
+        minMessage: 'Password must be at least {{ limit }} characters long',
         max: 30,
-        maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} caractères'
+        maxMessage: 'Password cannot exceed {{ limit }} characters'
     )]
     private ?string $password = null;
 
     #[ORM\Column(length: 5)]
-    #[Assert\Choice(choices: ['fr', 'en'], message: 'Langue obligatoire')]
-    private ?string $locale = 'fr';
+    #[Assert\Choice(choices: AppConfig::AVAILABLE_LOCALES, message: 'Language is required')]
+    private ?string $locale = AppConfig::DEFAULT_LOCALE;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: 'Fuseau horaire obligatoire')]
+    #[Assert\NotBlank(message: 'Timezone is required')]
     #[Assert\Timezone]
     private ?string $timezone = null;
 
@@ -203,7 +210,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setEmail(string $email): static
     {
-        $this->email = $email;
+        // Normalize email to lowercase for case-insensitive comparison
+        $this->email = strtolower(trim($email));
 
         return $this;
     }
@@ -262,7 +270,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
+        $roles[] = UserRole::USER;
 
         return array_unique($roles);
     }
@@ -328,7 +336,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             return false;
         }
 
-        return $this->emailVerificationTokenExpiresAt > new \DateTimeImmutable();
+        return $this->emailVerificationTokenExpiresAt >= new \DateTimeImmutable();
     }
 
     public function getPasswordResetToken(): ?string
@@ -361,7 +369,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             return false;
         }
 
-        return $this->passwordResetTokenExpiresAt > new \DateTimeImmutable();
+        return $this->passwordResetTokenExpiresAt >= new \DateTimeImmutable();
     }
 
     public function isActive(): ?bool

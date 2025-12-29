@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Config\EmailConfig;
 use App\Event\RegisterSuccessEvent;
 use App\Service\Auth\AuthService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -12,7 +13,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Event subscriber to handle user registration and send verification emails
  */
-class AuthRegisterSubscriber implements EventSubscriberInterface
+final class AuthRegisterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private AuthService $authService,
@@ -41,15 +42,15 @@ class AuthRegisterSubscriber implements EventSubscriberInterface
         );
 
         $email = (new TemplatedEmail())
-            ->from('noreply@budget-app.com')
+            ->from(EmailConfig::NOREPLY_EMAIL)
             ->to($user->getEmail())
-            ->subject('Vérifiez votre adresse email - Budget App')
+            ->subject(EmailConfig::SUBJECT_VERIFY_EMAIL)
             ->htmlTemplate('emails/signup.html.twig')
             ->locale($user->getLocale())
             ->context([
                 'username' => $user->getDisplayName(),
-                'verification_url' => $verificationUrl,
-                'expiration_date' => $user->getEmailVerificationTokenExpiresAt(),
+                'verificationUrl' => $verificationUrl,
+                'expirationDate' => $user->getEmailVerificationTokenExpiresAt(),
             ]);
 
         $this->mailer->send($email);

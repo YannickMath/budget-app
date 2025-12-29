@@ -1,16 +1,18 @@
 <?php
 
 namespace App\EventSubscriber;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+use App\Config\EmailConfig;
 use App\Event\ChangeUserEmailEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 
 /**
  * Event subscriber to handle user email change confirmation emails
  */
-class ChangeUserEmailSubscriber implements EventSubscriberInterface
+final class ChangeUserEmailSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private MailerInterface $mailer,
@@ -40,15 +42,15 @@ class ChangeUserEmailSubscriber implements EventSubscriberInterface
         );
 
         $email = (new TemplatedEmail())
-            ->from('noreply@budget-app.com')
+            ->from(EmailConfig::NOREPLY_EMAIL)
             ->to($changeEmailRequest->getNewEmail())
-            ->subject('Confirmez votre changement d\'adresse e-mail - Budget App')
-            ->htmlTemplate('user/profile/change_email.html.twig')
+            ->subject(EmailConfig::SUBJECT_EMAIL_CHANGE_CONFIRMATION)
+            ->htmlTemplate('emails/change_email_request.html.twig')
             ->locale($user->getLocale())
             ->context([
-                'email_change_url' => $emailChangeUrl,
+                'emailChangeUrl' => $emailChangeUrl,
                 'username' => $user->getDisplayName(),
-                'expiration_date' => $changeEmailRequest->getExpiresAt(),
+                'expirationDate' => $changeEmailRequest->getExpiresAt(),
             ]);
 
         $this->mailer->send($email);

@@ -21,7 +21,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * - Allows whitelisted routes (auth endpoints, resend verification)
  * - Blocks all write operations (POST/PUT/PATCH/DELETE) for unverified users
  */
-class EmailVerificationRequiredSubscriber implements EventSubscriberInterface
+final class EmailVerificationRequiredSubscriber implements EventSubscriberInterface
 {
     /**
      * Routes that do NOT require email verification

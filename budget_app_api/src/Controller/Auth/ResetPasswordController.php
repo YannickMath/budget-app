@@ -38,13 +38,13 @@ final class ResetPasswordController extends AbstractController
         if (!$isValid) {
             return $this->json([
                 'success' => false,
-                'message' => 'Token invalide ou expiré.'
+                'message' => 'Invalid or expired token.'
             ], Response::HTTP_BAD_REQUEST);
         }
 
         return $this->json([
             'success' => true,
-            'message' => 'Token valide.'
+            'message' => 'Valid token.'
         ], Response::HTTP_OK);
     }
 

@@ -8,7 +8,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler()]
-class CleanupExpiredTokensHandler
+final class CleanupExpiredTokensHandler
 {
     public function __construct(
         private UserRepository $userRepository,

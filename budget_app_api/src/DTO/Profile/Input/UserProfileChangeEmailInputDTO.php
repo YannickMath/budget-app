@@ -7,14 +7,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Data Transfer Object for user profile change email input
  */
-class UserProfileChangeEmailInputDTO
+final class UserProfileChangeEmailInputDTO
 {
-    #[Assert\NotBlank()]
-    #[Assert\Email]
+    #[Assert\NotBlank(message: 'New email must not be blank.')]
+    #[Assert\Email(message: 'The email "{{ value }}" is not a valid email address.')]
     #[Assert\Length(max: 180)]
-    public  ?string $new_email = null;
+    public ?string $newEmail = null;
 
-    #[Assert\NotBlank()]
-    #[Assert\Length(min: 3, max: 50)]
-    public  ?string $password = null;
+    #[Assert\NotBlank(message: 'Email confirmation must not be blank.')]
+    #[Assert\EqualTo(
+        propertyPath: 'newEmail',
+        message: 'Email addresses do not match.'
+    )]
+    public ?string $newEmailConfirmation = null;
+
+    #[Assert\NotBlank(message: 'Password must not be blank.')]
+    public ?string $password = null;
 }

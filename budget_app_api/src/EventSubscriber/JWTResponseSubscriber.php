@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * user information to the response, ensuring consistency between login and
  * registration endpoints.
  */
-class JWTResponseSubscriber implements EventSubscriberInterface
+final class JWTResponseSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents(): array
     {

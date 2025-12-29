@@ -40,7 +40,8 @@ class UserService
      */
     public function findOneByEmail(string $email): ?User
     {
-        return $this->userRepository->findOneBy(['email' => $email]);
+        // Normalize email to lowercase for case-insensitive search
+        return $this->userRepository->findOneBy(['email' => strtolower(trim($email))]);
     }
 
     /**

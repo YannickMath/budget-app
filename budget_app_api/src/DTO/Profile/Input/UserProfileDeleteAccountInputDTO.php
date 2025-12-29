@@ -7,7 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Data Transfer Object for user profile delete account input
  */
-class UserProfileDeleteAccountInputDTO
+final class UserProfileDeleteAccountInputDTO
 {
     #[Assert\NotBlank(message: "Password is required to confirm account deletion")]
     public string $password;

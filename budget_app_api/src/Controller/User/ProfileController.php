@@ -17,6 +17,7 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[AsController]
 final class ProfileController extends AbstractController
@@ -26,7 +27,8 @@ final class ProfileController extends AbstractController
     public function __construct(
         private readonly ProfileService $profileService,
         private RateLimiterFactoryInterface $emailChangeLimiter,
-
+        private RateLimiterFactoryInterface $passwordChangeLimiter,
+        private RateLimiterFactoryInterface $accountDeletionLimiter,
     ) {} 
     
     #[Route('/api/profile/me', name: 'app_user_profile', methods: ['GET'])]
@@ -45,7 +47,11 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/api/profile/me/edit', name: 'app_user_profile_edit', methods: ['PUT'])]
-    public function editProfile(#[MapRequestPayload()] UserProfileEditInputDTO $input): JsonResponse
+    public function editProfile(
+        #[MapRequestPayload(
+            serializationContext: ['allow_extra_attributes' => false]
+        )] UserProfileEditInputDTO $input
+    ): JsonResponse
     {
         $user = $this->getUser();
 
@@ -66,7 +72,7 @@ final class ProfileController extends AbstractController
         $user = $this->getUser();
 
         try {
-            $response = $this->profileService->changeEmail($user, $input->new_email, $input->password);
+            $response = $this->profileService->changeEmail($user, $input->newEmail, $input->password);
         } catch (\Exception $e) {
             return $this->json(["message" => "Failed to change email: " . $e->getMessage()], 400);
         }
@@ -87,8 +93,13 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/api/profile/me/change-password', name: 'app_user_change_password', methods: ['POST'])]
-    public function changePassword(#[MapRequestPayload()] UserProfileChangePasswordInputDTO $input): JsonResponse
+    public function changePassword(
+        #[MapRequestPayload()] UserProfileChangePasswordInputDTO $input,
+        Request $request
+    ): JsonResponse
     {
+        $this->applyRateLimit($this->passwordChangeLimiter, $request);
+
         $user = $this->getUser();
         try {
             $response = $this->profileService->changePassword($user, $input);
@@ -99,8 +110,13 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/api/profile/me/delete-account', name: 'app_user_delete_account', methods: ['DELETE'])]
-    public function deleteAccount(#[MapRequestPayload] UserProfileDeleteAccountInputDTO $input): JsonResponse
+    public function deleteAccount(
+        #[MapRequestPayload] UserProfileDeleteAccountInputDTO $input,
+        Request $request
+    ): JsonResponse
     {
+        $this->applyRateLimit($this->accountDeletionLimiter, $request);
+
         $user = $this->getUser();
         try {
             $response = $this->profileService->deleteAccount($user, $input->password, $input->reason);

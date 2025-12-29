@@ -11,7 +11,7 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User # User entity class
-                property: email # Property used as username/identifier
+                property: email # Property used as email/identifier
 
     # Defines security zones and authentication methods
     firewalls:
@@ -43,20 +43,22 @@ security:
             jwt: ~ # Enables JWT authentication from LexikJWTAuthenticationBundle
             refresh_jwt:
                 check_path: /api/token/refresh # URL to refresh JWT tokens
+            logout:
+                path: api_token_invalidate # Route name defined in routes.yaml
 
     access_control:
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/verify-email, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/confirm-email-change, roles: PUBLIC_ACCESS }
-        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/profile/me/confirmation-new-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - {
-              path: ^/api/admin/users/\d+/desactivate,
+              path: ^/api/auth/resend-verification-email,
               roles: IS_AUTHENTICATED_FULLY,
           }
+        - { path: ^/api/admin/, roles: [IS_AUTHENTICATED_FULLY, ROLE_ADMIN] }
         - { path: ^/api/logout, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 

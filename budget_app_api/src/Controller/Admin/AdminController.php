@@ -2,17 +2,20 @@
 
 namespace App\Controller\Admin;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use App\DTO\Admin\Input\AssignRolesInputDTO;
+use App\DTO\Admin\Input\ResetUserPasswordInputDTO;
+use App\Enum\UserRole;
 use App\Service\Admin\AdminUserService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[AsController]
-#[IsGranted('ROLE_ADMIN')]
-class AdminController extends AbstractController
+#[IsGranted(UserRole::ADMIN)]
+final class AdminController extends AbstractController
 {
     public function __construct(
         private readonly AdminUserService $adminUserService,
@@ -52,17 +55,15 @@ class AdminController extends AbstractController
     }
 
     #[Route('/api/admin/users/{id}/roles', name: 'app_admin_assign_roles', methods: ['POST'])]
-    public function assignRoles(Request $request, int $id): JsonResponse
+    public function assignRoles(
+        #[MapRequestPayload(
+            serializationContext: ['allow_extra_attributes' => false]
+        )] AssignRolesInputDTO $input,
+        int $id
+    ): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $roles = $data['roles'] ?? null;
-
-        if (!$roles || !is_array($roles)) {
-            return $this->json(['message' => 'Roles array is required.'], 400);
-        }
-
         try {
-            $this->adminUserService->assignRoles($id, $roles, $this->getUser());
+            $this->adminUserService->assignRoles($id, $input->roles, $this->getUser());
             return $this->json(['message' => 'Roles have been assigned successfully.'], 200);
         } catch (\Exception $e) {
             return $this->json(['message' => 'Failed to assign roles: ' . $e->getMessage()], 400);
@@ -81,17 +82,15 @@ class AdminController extends AbstractController
     }
 
     #[Route('/api/admin/users/{id}/reset-password', name: 'app_admin_reset_password', methods: ['POST'])]
-    public function resetUserPassword(Request $request, int $id): JsonResponse
+    public function resetUserPassword(
+        #[MapRequestPayload(
+            serializationContext: ['allow_extra_attributes' => false]
+        )] ResetUserPasswordInputDTO $input,
+        int $id
+    ): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $newPassword = $data['password'] ?? null;
-
-        if (!$newPassword) {
-            return $this->json(['message' => 'New password is required.'], 400);
-        }
-
         try {
-            $this->adminUserService->resetUserPassword($id, $newPassword, $this->getUser());
+            $this->adminUserService->resetUserPassword($id, $input->password, $this->getUser());
             return $this->json(['message' => 'Password has been reset successfully.'], 200);
         } catch (\Exception $e) {
             return $this->json(['message' => 'Failed to reset password: ' . $e->getMessage()], 400);

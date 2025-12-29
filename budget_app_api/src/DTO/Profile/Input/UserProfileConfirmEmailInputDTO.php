@@ -6,7 +6,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Data Transfer Object for user profile email confirmation input
  */
-class UserProfileConfirmEmailInputDTO
+final class UserProfileConfirmEmailInputDTO
 {
     #[Assert\NotBlank()]
     #[Assert\Length(min: 32, max: 64)]

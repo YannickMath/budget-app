@@ -3,15 +3,15 @@
 namespace App\EventSubscriber;
 
 use App\Config\EmailConfig;
-use App\Event\PasswordChangedEvent;
+use App\Event\EmailChangedEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 
 /**
- * Sends a confirmation email when a user changes their password
+ * Sends a notification email to the old email address when a user's email is changed
  */
-final class PasswordChangedSubscriber implements EventSubscriberInterface
+final class EmailChangedSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly MailerInterface $mailer
@@ -20,22 +20,27 @@ final class PasswordChangedSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PasswordChangedEvent::class => 'onPasswordChanged',
+            EmailChangedEvent::class => 'onEmailChanged',
         ];
     }
 
-    public function onPasswordChanged(PasswordChangedEvent $event): void
+    public function onEmailChanged(EmailChangedEvent $event): void
     {
         $user = $event->getUser();
+        $oldEmail = $event->getOldEmail();
+        $newEmail = $event->getNewEmail();
 
+        // Send notification to OLD email address (security measure)
         $email = (new TemplatedEmail())
             ->from(EmailConfig::NOREPLY_EMAIL)
-            ->to($user->getEmail())
-            ->subject(EmailConfig::SUBJECT_PASSWORD_CHANGED)
-            ->htmlTemplate('emails/password_changed.html.twig')
+            ->to($oldEmail)
+            ->subject(EmailConfig::SUBJECT_EMAIL_CHANGED)
+            ->htmlTemplate('emails/change_email_notification.html.twig')
             ->locale($user->getLocale())
             ->context([
                 'username' => $user->getDisplayName(),
+                'oldEmail' => $oldEmail,
+                'newEmail' => $newEmail,
                 'changedAt' => $event->getChangedAt(),
             ]);
 

@@ -13,6 +13,7 @@ use App\Event\ChangeUserEmailEvent;
 use App\Event\PasswordChangedEvent;
 use App\Repository\EmailChangeRequestRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -25,6 +26,7 @@ class ProfileService
         private EmailChangeRequestRepository $emailChangeRequestRepository,
         private EventDispatcherInterface $dispatcher,
         private UserService $userService,
+        private EntityManagerInterface $entityManager,
     ) {}
     
     /**
@@ -50,6 +52,13 @@ class ProfileService
     public function editProfile(User $user, UserProfileEditInputDTO $input): ProfileAttributesOutputDTO
     {
         if ($input->username !== null && $input->username !== $user->getDisplayName()) {
+            
+            $existingUser = $this->userRepository->findOneBy(['username' => $input->username]);
+
+            if ($existingUser !== null && $existingUser->getId() !== $user->getId()) {
+                throw new \InvalidArgumentException('This username is already in use.');
+            }
+
             $user->setUsername($input->username);
         }
         if ($input->timezone !== null && $input->timezone !== $user->getTimezone()) {
@@ -80,10 +89,10 @@ class ProfileService
             throw new \InvalidArgumentException('Invalid password provided.');
         }
 
-        $existingUser = $this->userRepository->findOneBy(['email' => $newEmail]);
+        $existingUser = $this->userService->findOneByEmail($newEmail);
 
         if ($existingUser !== null && $existingUser->getId() !== $user->getId()) {
-            throw new \InvalidArgumentException('Impossible to proceed with this email.');
+            throw new \InvalidArgumentException('This email is already in use.');
         }
 
         $token = bin2hex(random_bytes(32));
@@ -142,7 +151,7 @@ class ProfileService
     public function confirmEmailChange(string $token): EmailChangedOutputDTO
     {
         $emailChangeRequest = $this->emailChangeRequestRepository->findOneBy(['token' => $token]);
-        if (!$emailChangeRequest || $emailChangeRequest->getExpiresAt() < new \DateTimeImmutable()) {
+        if (!$emailChangeRequest || $emailChangeRequest->getExpiresAt() <= new \DateTimeImmutable()) {
             throw new \InvalidArgumentException('Invalid or expired timming.');
         }
         if($emailChangeRequest->getConfirmedAt() ) {
@@ -154,6 +163,7 @@ class ProfileService
         }
 
         $user = $emailChangeRequest->getUser();
+        $oldEmail = $emailChangeRequest->getOldEmail();
         $newEmail = $emailChangeRequest->getNewEmail();
         $user->setEmail($newEmail);
         $user->setEmailVerifiedAt(new \DateTimeImmutable());
@@ -169,12 +179,38 @@ class ProfileService
         $emailChangeRequest->setConfirmedAt(new \DateTimeImmutable());
         $this->emailChangeRequestRepository->save($emailChangeRequest, true);
 
+        // Invalidate existing refresh tokens
+        $this->invalidateUserRefreshTokens($oldEmail);
+
+        $event = new \App\Event\EmailChangedEvent($user, $oldEmail, $newEmail);
+        $this->dispatcher->dispatch($event);
+
         return new EmailChangedOutputDTO(
-            message: 'Your new email has been confirmed.',
-            email: $newEmail
+            message: 'Your new email has been confirmed. Please log in again with your new email address.',
+            email: $newEmail,
+            shouldLogout: true
         );
     } 
     
+    /**
+     * Invalidate all refresh tokens for a user
+     */
+    private function invalidateUserRefreshTokens(string $username): void
+    {
+        // Delete all refresh tokens for this user (username = email)
+        $connection = $this->entityManager->getConnection();
+
+        try {
+            $connection->executeStatement(
+                'DELETE FROM refresh_tokens WHERE username = :username',
+                ['username' => $username]
+            );
+        } catch (\Exception $e) {
+            // Log but don't fail the email change if token deletion fails
+            error_log('Failed to invalidate refresh tokens: ' . $e->getMessage());
+        }
+    }
+
     public function deleteAccount(User $user, string $password, ?string $reason = null): MessageResponseOutputDTO
     {
         if (!$this->userService->verifyPassword($user, $password)) {

@@ -7,14 +7,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Data Transfer Object for reset password input
  */
-class ResetPasswordInputDTO
+final class ResetPasswordInputDTO
 {
-    #[Assert\NotBlank(message: 'Le nouveau mot de passe ne doit pas être vide.')]
+    #[Assert\NotBlank(message: 'Password must not be blank.')]
     #[Assert\Length(
         min: 8,
-        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères',
+        minMessage: 'Password must be at least {{ limit }} characters long.',
         max: 30,
-        maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} caractères'
+        maxMessage: 'Password cannot be longer than {{ limit }} characters.'
     )]
     public ?string $password;
+
+    #[Assert\NotBlank(message: 'Password confirmation must not be blank.')]
+    #[Assert\EqualTo(
+        propertyPath: 'password',
+        message: 'Passwords do not match.'
+    )]
+    public ?string $passwordConfirmation;
 }

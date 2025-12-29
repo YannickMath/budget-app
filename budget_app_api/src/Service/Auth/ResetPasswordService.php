@@ -23,7 +23,7 @@ class ResetPasswordService
      */
     public function validateToken(string $token): bool
     {
-        $user = $this->userRepository->findOneBy(['password_reset_token' => $token]);
+        $user = $this->userRepository->findOneBy(['passwordResetToken' => $token]);
 
         return $user && $user->isPasswordResetTokenValid();
     }
@@ -33,7 +33,7 @@ class ResetPasswordService
      */
     public function resetPassword(string $token, ResetPasswordInputDTO $input): MessageResponseOutputDTO
     {
-        $user = $this->userRepository->findOneBy(['password_reset_token' => $token]);
+        $user = $this->userRepository->findOneBy(['passwordResetToken' => $token]);
 
         if (!$user || !$user->isPasswordResetTokenValid() || !$user->isActive()) {
             throw new BadRequestHttpException('Invalid or expired token.');
@@ -51,7 +51,7 @@ class ResetPasswordService
         }
 
         return new MessageResponseOutputDTO(
-            message: 'Le mot de passe a été réinitialisé avec succès.'
+            message: 'Password has been reset successfully.'
         );
     }
 }

@@ -2,13 +2,14 @@
 
 namespace App\DTO\Admin\Input;
 
+use App\Config\AppConfig;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * DTO for admin user updates
  * Allows updating any user field including roles and verification status
  */
-class AdminUpdateUserInputDTO
+final class AdminUpdateUserInputDTO
 {
     #[Assert\Email(message: 'Invalid email address')]
     #[Assert\Length(max: 180)]
@@ -23,7 +24,7 @@ class AdminUpdateUserInputDTO
     #[Assert\Timezone]
     public ?string $timezone = null;
 
-    #[Assert\Choice(choices: ['fr', 'en'])]
+    #[Assert\Choice(choices: AppConfig::AVAILABLE_LOCALES)]
     public ?string $locale = null;
 
     public ?array $roles = null;

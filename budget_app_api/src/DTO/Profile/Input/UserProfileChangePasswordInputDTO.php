@@ -7,7 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * DTO for user profile password change input
  */
-class UserProfileChangePasswordInputDTO
+final class UserProfileChangePasswordInputDTO
 {
     #[Assert\NotBlank(message: 'Current password should not be blank')]
     public string $currentPassword;
