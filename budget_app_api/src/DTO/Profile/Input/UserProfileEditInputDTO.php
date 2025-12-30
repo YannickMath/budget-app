@@ -2,24 +2,14 @@
 
 namespace App\DTO\Profile\Input;
 
-use App\Entity\User;
-use DateTimeInterface;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Constraints\Date;
 
-#[UniqueEntity(
-    fields: ['email'],
-    message: 'This email is already registered.',
-    entityClass: User::class
-)   ]
-
-class UserProfileEditInputDTO
+/**
+ * Data Transfer Object for user profile edit input
+ * Note: Email changes must use the dedicated changeEmail endpoint with confirmation
+ */
+final class UserProfileEditInputDTO
 {
-    #[Assert\Email]
-    #[Assert\Length(max: 180)]
-    public  ?string $email = null;
-
     #[Assert\Length(min: 3, max: 50)]
     public  ?string $username = null;
 

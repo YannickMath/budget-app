@@ -2,91 +2,152 @@
 
 namespace App\Service\User;
 
-use App\DTO\RegistrationUser\Input\UserRegistrationInputDTO;
-use App\DTO\User\Input\UserUpdateInputDTO;
 use App\DTO\User\Output\UserAttributesOutputDTO;
 use App\DTO\User\Output\UserCollectionAttributesOutputDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use Exception;
-use RuntimeException;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * UserService provides reusable utility methods for user operations
+ * Used as a base by ProfileService, AdminUserService, AuthService, etc.
+ *
+ * This service contains only:
+ * - Read operations (find, search)
+ * - Utility methods (transformations, validations)
+ * - Low-level operations used by other services
+ */
 class UserService
 {
     public function __construct(
-        private UserRepository $userRepository,
-
+        private readonly UserRepository $userRepository,
         private readonly UserPasswordHasherInterface $passwordHasher,
     ) {}
 
+    // ==================== Read Methods ====================
     
-    public function createNewUser(UserRegistrationInputDTO $data): User
+    /**
+     * Find a user by ID
+     */
+    public function findOneById(int $id): ?User
     {
-        $user = new User();
-        $user->setEmail($data->email);
-        $user->setUsername($data->username);
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
-        $user->setPassword($hashedPassword);
-        $user->setTimezone($data->timezone);
-        $user->setLocale($data->locale);
-        $user->setRoles($data->roles);
-
-        try {
-            $this->userRepository->save($user, true);
-        } catch (UniqueConstraintViolationException $e) {
-            throw new UnprocessableEntityHttpException('Cet email ou nom d\'utilisateur est déjà utilisé');
-        } catch (Exception $e) {
-            throw new RuntimeException('Erreur lors de la création de l\'utilisateur: ' . $e->getMessage());
-        }
-
-        return $user;
+        return $this->userRepository->find($id);
     }
 
-    public function updateUser(UserUpdateInputDTO $data, User $user): User
+    /**
+     * Find a user by email
+     */
+    public function findOneByEmail(string $email): ?User
     {
-        $hasChanges = false;
-        
-        if ($data->username !== null && $data->username !== $user->getDisplayName()) {
-            $user->setUsername($data->username);
-            $hasChanges = true;
-        }
-        if ($data->password !== null && !password_verify($data->password, $user->getPassword())) {
-            $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
-            $user->setPassword($hashedPassword);
-            $hasChanges = true;
-        }
-        if ($data->is_active !== null && $data->is_active !== $user->isActive()) {
-            $user->setIsActive($data->is_active);
-            $hasChanges = true;     
-        }
-        if ($data->roles !== null && $data->roles !== $user->getRoles()) {
-            $user->setRoles($data->roles);
-            $hasChanges = true;
-        }
-        if ($data->email_verified_at !== null && $data->email_verified_at !== $user->getEmailVerifiedAt()) {
-            $user->setEmailVerifiedAt($data->email_verified_at);
-            $hasChanges = true;
-        }
-        
-        if (!$hasChanges) {
-            throw new UnprocessableEntityHttpException('No changes were made to the user.');
-        }
-
-        try {
-            $this->userRepository->save($user, true);
-        } catch (UniqueConstraintViolationException $e) {
-            throw new UnprocessableEntityHttpException('Cet email ou nom d\'utilisateur est déjà utilisé');
-        } catch (Exception $e) {
-            throw new RuntimeException('Erreur lors de la mise à jour de l\'utilisateur: ' . $e->getMessage());
-        }
-
-        return $user;
+        // Normalize email to lowercase for case-insensitive search
+        return $this->userRepository->findOneBy(['email' => strtolower(trim($email))]);
     }
 
+    /**
+     * Find a user by username
+     */
+    public function findOneByUsername(string $username): ?User
+    {
+        return $this->userRepository->findOneBy(['username' => $username]);
+    }
+
+    /**
+     * Find a user by public ID
+     */
+    public function findOneByPublicId(Uuid $publicId): ?User
+    {
+        return $this->userRepository->findOneBy(['publicId' => $publicId]);
+    }
+
+    /**
+     * Get all users
+     */
+    public function findAll(): array
+    {
+        return $this->userRepository->findAll();
+    }
+
+    /**
+     * Get active users only
+     */
+    public function findActiveUsers(): array
+    {
+        return $this->userRepository->findBy(['isActive' => true, 'deletedAt' => null]);
+    }
+
+    /**
+     * Get deleted users
+     */
+    public function findDeletedUsers(): array
+    {
+        return $this->userRepository->createQueryBuilder('u')
+            ->where('u.deletedAt IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
+    // ==================== Validation Methods ====================
+
+    /**
+     * Check if an email is available (not already in use)
+     */
+    public function isEmailAvailable(string $email, ?int $excludeUserId = null): bool
+    {
+        $user = $this->findOneByEmail($email);
+
+        if (!$user) {
+            return true;
+        }
+
+        // If excluding a user (for updates), check if it's the same user
+        if ($excludeUserId !== null && $user->getId() === $excludeUserId) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a username is available (not already in use)
+     */
+    public function isUsernameAvailable(string $username, ?int $excludeUserId = null): bool
+    {
+        $user = $this->findOneByUsername($username);
+
+        if (!$user) {
+            return true;
+        }
+
+        // If excluding a user (for updates), check if it's the same user
+        if ($excludeUserId !== null && $user->getId() === $excludeUserId) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Verify a plain password against a user's hashed password
+     */
+    public function verifyPassword(User $user, string $plainPassword): bool
+    {
+        return $this->passwordHasher->isPasswordValid($user, $plainPassword);
+    }
+
+    /**
+     * Hash a password for a user
+     */
+    public function hashPassword(User $user, string $plainPassword): string
+    {
+        return $this->passwordHasher->hashPassword($user, $plainPassword);
+    }
+
+    // ==================== Transformation Methods ====================
+
+    /**
+     * Transform a User entity to UserAttributesOutputDTO
+     */
     public function toDetailsAttributesForUser(User $user): UserAttributesOutputDTO
     {
         return new UserAttributesOutputDTO(
@@ -107,36 +168,19 @@ class UserService
         );
     }
 
+    /**
+     * Transform an array of User entities to UserCollectionAttributesOutputDTO
+     */
     public function toCollectionAttributesForUsers(array $users): UserCollectionAttributesOutputDTO
     {
-        $userDTOs = [];
-        
-        foreach ($users as $user) {
-            $userDTOs[] = $this->toDetailsAttributesForUser($user);
-        }
+        $userDTOs = array_map(
+            fn(User $user) => $this->toDetailsAttributesForUser($user),
+            $users
+        );
+
         return new UserCollectionAttributesOutputDTO(
             users: $userDTOs
         );
-        
-    }
-    
-    public function findOneById(int $id): ?User
-    {
-        return $this->userRepository->find($id);
     }
 
-    public function findOneByEmail(string $email): ?User
-    {
-        return $this->userRepository->findOneBy(['email' => $email]);
-    }
-    
-    public function findOneByPublicId(Uuid $publicId): ?User
-    {
-        return $this->userRepository->findOneBy(['publicId' => $publicId]);
-    }
-
-    public function findAll(): array
-    {
-        return $this->userRepository->findAll();
-    }
 }

@@ -2,19 +2,33 @@
 
 namespace App\Controller\User;
 
+use App\DTO\Profile\Input\UserProfileChangeEmailInputDTO;
+use App\DTO\Profile\Input\UserProfileChangePasswordInputDTO;
+use App\DTO\Profile\Input\UserProfileConfirmEmailInputDTO;
+use App\DTO\Profile\Input\UserProfileDeleteAccountInputDTO;
 use App\DTO\Profile\Input\UserProfileEditInputDTO;
+use App\Entity\User;
 use App\Service\User\ProfileService;
+use App\Trait\RateLimiterTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[AsController]
 final class ProfileController extends AbstractController
 {
+    use RateLimiterTrait;
+    
     public function __construct(
-        private readonly ProfileService $profileService
+        private readonly ProfileService $profileService,
+        private RateLimiterFactoryInterface $emailChangeLimiter,
+        private RateLimiterFactoryInterface $passwordChangeLimiter,
+        private RateLimiterFactoryInterface $accountDeletionLimiter,
     ) {} 
     
     #[Route('/api/profile/me', name: 'app_user_profile', methods: ['GET'])]
@@ -22,40 +36,94 @@ final class ProfileController extends AbstractController
     {
         $user = $this->getUser();
 
-        $profileData = $this->profileService->getProfileData($user);
+        try {
+            $profileData = $this->profileService->getProfileData($user);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to retrieve profile data: " . $e->getMessage()], 400);
+        }
 
         return $this->json($profileData);
 
     }
 
     #[Route('/api/profile/me/edit', name: 'app_user_profile_edit', methods: ['PUT'])]
-    public function editProfile(#[MapRequestPayload()] UserProfileEditInputDTO $input): JsonResponse
+    public function editProfile(
+        #[MapRequestPayload(
+            serializationContext: ['allow_extra_attributes' => false]
+        )] UserProfileEditInputDTO $input
+    ): JsonResponse
     {
         $user = $this->getUser();
 
-        $updatedProfileData = $this->profileService->editProfile($user, $input);
+        try {
+            $updatedProfileData = $this->profileService->editProfile($user, $input);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to update profile: " . $e->getMessage()], 400);
+        }
 
-        return $this->json(["message" => "votre profil a été mis à jour", "data" => $updatedProfileData], 200);
+        return $this->json($updatedProfileData, 200);
     }
 
     #[Route('/api/profile/me/change-email', name: 'app_user_change_email', methods: ['POST'])]
-    public function changeEmail(): JsonResponse
+    public function changeEmail(#[MapRequestPayload()] UserProfileChangeEmailInputDTO $input, Request $request): JsonResponse
     {
-        // Implementation for changing email
-        return $this->json(["message" => "Email change functionality not implemented yet."], 501);
+        $this->applyRateLimit($this->emailChangeLimiter, $request);
+
+        $user = $this->getUser();
+
+        try {
+            $response = $this->profileService->changeEmail($user, $input->newEmail, $input->password);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to change email: " . $e->getMessage()], 400);
+        }
+
+        return $this->json($response, 200);
+    }
+
+    #[Route('/api/profile/me/confirmation-new-email', name: 'app_user_resend_confirmation_new_email', methods: ['POST'])]
+    public function resendConfirmationEmail(#[MapRequestPayload()] UserProfileConfirmEmailInputDTO $input): JsonResponse
+    {
+        try {
+            $response = $this->profileService->confirmEmailChange($input->token);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to resend confirmation email: " . $e->getMessage()], 400);
+        }
+
+        return $this->json($response, 200);
     }
 
     #[Route('/api/profile/me/change-password', name: 'app_user_change_password', methods: ['POST'])]
-    public function changePassword(): JsonResponse
+    public function changePassword(
+        #[MapRequestPayload()] UserProfileChangePasswordInputDTO $input,
+        Request $request
+    ): JsonResponse
     {
-        // Implementation for changing password
-        return $this->json(["message" => "Password change functionality not implemented yet."], 501);
+        $this->applyRateLimit($this->passwordChangeLimiter, $request);
+
+        $user = $this->getUser();
+        try {
+            $response = $this->profileService->changePassword($user, $input);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to change password: " . $e->getMessage()], 400);
+        }
+        return $this->json($response, 200);
     }
 
-    #[Route('/api/profile/me/confirmation-email', name: 'app_user_resend_confirmation_email', methods: ['POST'])]
-    public function resendConfirmationEmail(): JsonResponse
+    #[Route('/api/profile/me/delete-account', name: 'app_user_delete_account', methods: ['DELETE'])]
+    public function deleteAccount(
+        #[MapRequestPayload] UserProfileDeleteAccountInputDTO $input,
+        Request $request
+    ): JsonResponse
     {
-        // Implementation for resending confirmation email
-        return $this->json(["message" => "Resend confirmation email functionality not implemented yet."], 501);
+        $this->applyRateLimit($this->accountDeletionLimiter, $request);
+
+        $user = $this->getUser();
+        try {
+            $response = $this->profileService->deleteAccount($user, $input->password, $input->reason);
+        } catch (\Exception $e) {
+            return $this->json(["message" => "Failed to delete account: " . $e->getMessage()], 400);
+        }
+        return $this->json($response, 200);
     }
+
 }

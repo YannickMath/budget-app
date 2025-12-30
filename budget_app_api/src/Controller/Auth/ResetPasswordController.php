@@ -2,8 +2,8 @@
 
 namespace App\Controller\Auth;
 
-use App\DTO\Auth\ResetPasswordInputDTO;
-use App\Service\Auth\ResetPasswordService;
+use App\DTO\Auth\Input\ResetPasswordInputDTO;
+use App\Service\Auth\AuthService;
 use App\Trait\RateLimiterTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,8 +21,8 @@ final class ResetPasswordController extends AbstractController
     use RateLimiterTrait;
 
     public function __construct(
-        private ResetPasswordService $resetPasswordService,
-        private RateLimiterFactoryInterface $passwordResetLimiter,
+        private readonly AuthService $authService,
+        private readonly RateLimiterFactoryInterface $passwordResetLimiter,
     ) {}
 
     #[Route('/api/auth/reset-password/validate', name: 'app_auth_validate_reset_token', methods: ['GET'])]
@@ -33,18 +33,18 @@ final class ResetPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $isValid = $this->resetPasswordService->validateToken($token);
+        $isValid = $this->authService->validatePasswordResetToken($token);
 
         if (!$isValid) {
             return $this->json([
                 'success' => false,
-                'message' => 'Token invalide ou expiré.'
+                'message' => 'Invalid or expired token.'
             ], Response::HTTP_BAD_REQUEST);
         }
 
         return $this->json([
             'success' => true,
-            'message' => 'Token valide.'
+            'message' => 'Valid token.'
         ], Response::HTTP_OK);
     }
 
@@ -57,8 +57,8 @@ final class ResetPasswordController extends AbstractController
     {
         $this->applyRateLimit($this->passwordResetLimiter, $request);
 
-        $this->resetPasswordService->resetPassword($token, $input);
+        $response = $this->authService->resetPassword($token, $input);
 
-        return $this->json(['message' => 'Le mot de passe a été réinitialisé avec succès.'], Response::HTTP_OK);
+        return $this->json($response, Response::HTTP_OK);
     }
 }

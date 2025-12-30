@@ -24,7 +24,7 @@ trait RateLimiterTrait
         if (!$limit->consume(1)->isAccepted()) {
             throw new TooManyRequestsHttpException(
                 retryAfter: $limit->consume(1)->getRetryAfter()->getTimestamp() - time(),
-                message: 'Trop de tentatives. Veuillez réessayer plus tard.'
+                message: 'Too many attempts. Please try again later.'
             );
         }
     }

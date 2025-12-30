@@ -24,6 +24,6 @@ services:
     # please note that last definitions always *replace* previous ones
 
     # Rate limiter for login endpoint
-    App\EventListener\LoginRateLimiterListener:
+    App\EventSubscriber\LoginRateLimiterSubscriber:
         arguments:
             $loginLimiter: '@limiter.login'
