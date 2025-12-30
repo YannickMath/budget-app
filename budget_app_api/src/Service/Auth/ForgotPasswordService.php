@@ -30,14 +30,14 @@ class ForgotPasswordService
         $user = $this->userService->findOneByEmail($email);
         if (!$user || !$user->isActive()) {
             return new MessageResponseOutputDTO(
-                message: "If the email exists, a reset link has been sent."
+                message: 'If the email exists, a reset link has been sent.'
             );
         }
 
         $this->generatePasswordResetToken($user);
 
         return new MessageResponseOutputDTO(
-            message: "If the email exists, a reset link has been sent."
+            message: 'If the email exists, a reset link has been sent.'
         );
     }
 

@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 final class UserProfileDeleteAccountInputDTO
 {
-    #[Assert\NotBlank(message: "Password is required to confirm account deletion")]
+    #[Assert\NotBlank(message: 'Password is required to confirm account deletion')]
     public string $password;
 
     #[Assert\Length(max: 500, maxMessage: "Deletion reason cannot exceed {{ limit }} characters")]
