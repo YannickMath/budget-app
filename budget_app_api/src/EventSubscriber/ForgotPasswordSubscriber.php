@@ -4,9 +4,9 @@ namespace App\EventSubscriber;
 
 use App\Config\EmailConfig;
 use App\Event\ForgotPasswordEvent;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use App\Message\SendEmailMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final class ForgotPasswordSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MailerInterface $mailer,
+        private MessageBusInterface $messageBus,
         #[Autowire(env: 'FRONTEND_URL')]
         private string $frontendUrl
     )
@@ -31,26 +31,25 @@ final class ForgotPasswordSubscriber implements EventSubscriberInterface
     public function onForgotPassword(ForgotPasswordEvent $event): void
     {
         $user = $event->getUser();
-        
+
         $resetUrl = sprintf(
             '%s/reset-password?token=%s',
             $this->frontendUrl,
             $user->getPasswordResetToken()
         );
 
-        $email = (new TemplatedEmail())
-            ->from(EmailConfig::NOREPLY_EMAIL)
-            ->to($user->getEmail())
-            ->subject(EmailConfig::SUBJECT_PASSWORD_RESET)
-            ->htmlTemplate('emails/forgot_password.html.twig')
-            ->locale($user->getLocale())
-            ->context([
+        $message = new SendEmailMessage(
+            to: $user->getEmail(),
+            subject: EmailConfig::SUBJECT_PASSWORD_RESET,
+            template: 'emails/forgot_password.html.twig',
+            locale: $user->getLocale(),
+            context: [
                 'resetUrl' => $resetUrl,
                 'username' => $user->getDisplayName(),
                 'expirationDate' => $user->getPasswordResetTokenExpiresAt(),
-            ]);
+            ]
+        );
 
-        $this->mailer->send($email);
-
+        $this->messageBus->dispatch($message);
         }
     }

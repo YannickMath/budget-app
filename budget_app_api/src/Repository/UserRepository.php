@@ -19,44 +19,19 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    //    /**
-    //     * @return User[] Returns an array of User objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?User
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
-
     public function clearExpiredTokens(): int
     {
         $now = new \DateTimeImmutable();
 
         $qb = $this->createQueryBuilder('u')
             ->update()
-            ->set('u.password_reset_token', 'NULL')
-            ->set('u.password_reset_token_expires_at', 'NULL')
-            ->set('u.email_verification_token', 'NULL')
-            ->set('u.email_verification_token_expires_at', 'NULL')
+            ->set('u.passwordResetToken', 'NULL')
+            ->set('u.passwordResetTokenExpiresAt', 'NULL')
+            ->set('u.emailVerificationToken', 'NULL')
+            ->set('u.emailVerificationTokenExpiresAt', 'NULL')
             ->where(
-                '(u.password_reset_token_expires_at IS NOT NULL AND u.password_reset_token_expires_at < :now)'
-                . ' OR (u.email_verification_token_expires_at IS NOT NULL AND u.email_verification_token_expires_at < :now)'
+                '(u.passwordResetTokenExpiresAt IS NOT NULL AND u.passwordResetTokenExpiresAt < :now)'
+                . ' OR (u.emailVerificationTokenExpiresAt IS NOT NULL AND u.emailVerificationTokenExpiresAt < :now)'
             )
             ->setParameter('now', $now);
 
@@ -70,8 +45,8 @@ class UserRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('u')
             ->select('COUNT(u.id)')
             ->where(
-                '(u.password_reset_token_expires_at IS NOT NULL AND u.password_reset_token_expires_at < :now)'
-                . ' OR (u.email_verification_token_expires_at IS NOT NULL AND u.email_verification_token_expires_at < :now)'
+                '(u.passwordResetTokenExpiresAt IS NOT NULL AND u.passwordResetTokenExpiresAt < :now)'
+                . ' OR (u.emailVerificationTokenExpiresAt IS NOT NULL AND u.emailVerificationTokenExpiresAt < :now)'
             )
             ->setParameter('now', $now);
 

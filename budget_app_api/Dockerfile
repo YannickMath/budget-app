@@ -20,7 +20,13 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install pdo pdo_pgsql intl opcache
 
 # --------------------------------------------------------------------
-# 3.1 Configuration OPcache pour le développement
+# 3.1 Installer l'extension Redis via PECL
+# --------------------------------------------------------------------
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
+# --------------------------------------------------------------------
+# 3.2 Configuration OPcache pour le développement
 # --------------------------------------------------------------------
 RUN { \
     echo 'opcache.enable=1'; \

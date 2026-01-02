@@ -11,6 +11,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-budget_app}?serverVersion=15&charset=utf8
     depends_on:
       - db
+      - redis
     volumes:
       - ./budget_app_api:/var/www # Bind Mount (hot reload) : for development
     networks:
@@ -41,8 +42,58 @@ services:
     networks:
       - budget_network
 
+  # Service Redis
+  redis:
+    image: redis:7-alpine
+    container_name: budget_app_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - budget_network
+    command: redis-server --appendonly yes
+
+  # Service Worker (Messenger Consumer)
+  worker:
+    build: ./budget_app_api
+    container_name: budget_app_worker
+    command: php bin/console messenger:consume async -vv --time-limit=3600 --memory-limit=128M
+    depends_on:
+      - db
+      - redis
+      - mailhog
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-budget_app}?serverVersion=15&charset=utf8
+    volumes:
+      - ./budget_app_api:/var/www
+    networks:
+      - budget_network
+    restart: unless-stopped
+
+  # Service Scheduler (Cron Tasks Trigger)
+  scheduler:
+    build: ./budget_app_api
+    container_name: budget_app_scheduler
+    command: php bin/console messenger:consume scheduler_clean_expired_tokens -vv --time-limit=3600
+    depends_on:
+      - db
+      - redis
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-budget_app}?serverVersion=15&charset=utf8
+    volumes:
+      - ./budget_app_api:/var/www
+    networks:
+      - budget_network
+    restart: unless-stopped
+
 volumes:
   db_data:
+  redis_data:
 
 networks:
   budget_network:

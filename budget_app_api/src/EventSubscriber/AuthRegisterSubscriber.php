@@ -4,10 +4,10 @@ namespace App\EventSubscriber;
 
 use App\Config\EmailConfig;
 use App\Event\RegisterSuccessEvent;
+use App\Message\SendEmailMessage;
 use App\Service\Auth\AuthService;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -17,7 +17,7 @@ final class AuthRegisterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private AuthService $authService,
-        private MailerInterface $mailer,
+        private MessageBusInterface $messageBus,
         #[Autowire(env: 'API_URL')]
         private string $apiUrl
     ) {}
@@ -41,18 +41,18 @@ final class AuthRegisterSubscriber implements EventSubscriberInterface
             $user->getEmailVerificationToken()
         );
 
-        $email = (new TemplatedEmail())
-            ->from(EmailConfig::NOREPLY_EMAIL)
-            ->to($user->getEmail())
-            ->subject(EmailConfig::SUBJECT_VERIFY_EMAIL)
-            ->htmlTemplate('emails/signup.html.twig')
-            ->locale($user->getLocale())
-            ->context([
+        $message = new SendEmailMessage(
+            to: $user->getEmail(),
+            subject: EmailConfig::SUBJECT_VERIFY_EMAIL,
+            template: 'emails/signup.html.twig',
+            locale: $user->getLocale(),
+            context: [
                 'username' => $user->getDisplayName(),
                 'verificationUrl' => $verificationUrl,
                 'expirationDate' => $user->getEmailVerificationTokenExpiresAt(),
-            ]);
+            ]
+        );
 
-        $this->mailer->send($email);
+        $this->messageBus->dispatch($message);
     }
 }

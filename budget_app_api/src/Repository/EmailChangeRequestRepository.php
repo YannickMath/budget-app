@@ -18,28 +18,35 @@ class EmailChangeRequestRepository extends ServiceEntityRepository
         parent::__construct($registry, EmailChangeRequest::class);
     }
 
-//    /**
-//     * @return EmailChangeRequest[] Returns an array of EmailChangeRequest objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('e.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * Count expired email change requests that are not confirmed
+     */
+    public function countExpiredRequests(): int
+    {
+        $now = new \DateTimeImmutable();
 
-//    public function findOneBySomeField($value): ?EmailChangeRequest
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        $qb = $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.expiresAt < :now')
+            ->andWhere('e.confirmedAt IS NULL')
+            ->setParameter('now', $now);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Delete expired email change requests that are not confirmed
+     */
+    public function deleteExpiredRequests(): int
+    {
+        $now = new \DateTimeImmutable();
+
+        $qb = $this->createQueryBuilder('e')
+            ->delete()
+            ->where('e.expiresAt < :now')
+            ->andWhere('e.confirmedAt IS NULL')
+            ->setParameter('now', $now);
+
+        return $qb->getQuery()->execute();
+    }
 }

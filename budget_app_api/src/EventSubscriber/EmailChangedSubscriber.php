@@ -4,9 +4,9 @@ namespace App\EventSubscriber;
 
 use App\Config\EmailConfig;
 use App\Event\EmailChangedEvent;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use App\Message\SendEmailMessage;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Sends a notification email to the old email address when a user's email is changed
@@ -14,7 +14,7 @@ use Symfony\Component\Mailer\MailerInterface;
 final class EmailChangedSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly MailerInterface $mailer
+        private readonly MessageBusInterface $messageBus
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -31,19 +31,19 @@ final class EmailChangedSubscriber implements EventSubscriberInterface
         $newEmail = $event->getNewEmail();
 
         // Send notification to OLD email address (security measure)
-        $email = (new TemplatedEmail())
-            ->from(EmailConfig::NOREPLY_EMAIL)
-            ->to($oldEmail)
-            ->subject(EmailConfig::SUBJECT_EMAIL_CHANGED)
-            ->htmlTemplate('emails/change_email_notification.html.twig')
-            ->locale($user->getLocale())
-            ->context([
+        $message = new SendEmailMessage(
+            to: $oldEmail,
+            subject: EmailConfig::SUBJECT_EMAIL_CHANGED,
+            template: 'emails/change_email_notification.html.twig',
+            locale: $user->getLocale(),
+            context: [
                 'username' => $user->getDisplayName(),
                 'oldEmail' => $oldEmail,
                 'newEmail' => $newEmail,
                 'changedAt' => $event->getChangedAt(),
-            ]);
+            ]
+        );
 
-        $this->mailer->send($email);
+        $this->messageBus->dispatch($message);
     }
 }
