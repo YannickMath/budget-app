@@ -1,0 +1,15 @@
+# Symfony Lock Component
+# =====================
+# Utilisé par le bundle auditor pour éviter les race conditions lors de l'écriture
+# des audits simultanés (ex: 2 admins modifient le même user en même temps).
+#
+# Options disponibles pour LOCK_DSN dans .env :
+# - flock                    → Filesystem lock (dev/prod simple serveur) ✅ ACTUEL
+# - redis://localhost:6379   → Redis (production multi-serveurs)
+# - postgresql://user:pass@host/db → PostgreSQL
+# - memcached://localhost:11211    → Memcached
+#
+# Garantit que chaque audit est écrit de manière atomique et sécurisée.
+
+framework:
+    lock: '%env(LOCK_DSN)%'

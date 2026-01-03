@@ -28,10 +28,12 @@ use App\Provider\User\UserAttributesProvider;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use DH\Auditor\Provider\Doctrine\Auditing\Annotation\Auditable;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`users`')]
 #[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false)]
+#[Auditable]
 // #[ApiResource()]
 #[Get(
     // uriTemplate: '/users/{publicId}',

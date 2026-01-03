@@ -1,0 +1,18 @@
+# Symfony Translation Component
+# ============================
+# Utilisé par le bundle auditor pour internationaliser les messages d'audit
+# (ex: "Created" → "Créé", "Updated" → "Modifié", etc.).
+#
+# Configuration actuelle :
+# - default_locale: fr      → Locale par défaut (français)
+# - fallbacks: ['en']       → Si traduction FR manquante, utilise EN
+#
+# Utile si vous créez un viewer web pour afficher les audits en français.
+# Les fichiers de traduction se trouvent dans : translations/
+
+framework:
+    default_locale: fr
+    translator:
+        default_path: '%kernel.project_dir%/translations'
+        fallbacks: ['en']
+        providers:

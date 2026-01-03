@@ -1,0 +1,8 @@
+# Ce fichier sert uniquement à garder le dossier translations/ dans git
+# (Git ne peut pas tracker les dossiers vides)
+#
+# Ce dossier est utilisé par Symfony Translation pour stocker les fichiers
+# de traduction (messages.fr.yaml, messages.en.yaml, etc.)
+#
+# Créé automatiquement par symfony/translation lors de l'installation
+# du bundle auditor (dépendance requise pour internationaliser les messages d'audit).

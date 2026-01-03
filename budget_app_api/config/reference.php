@@ -300,7 +300,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         },
  *     },
  *     translator?: bool|array{ // Translator configuration
- *         enabled?: bool, // Default: false
+ *         enabled?: bool, // Default: true
  *         fallbacks?: list<scalar|null>,
  *         logging?: bool, // Default: false
  *         formatter?: scalar|null, // Default: "translator.formatter.default"
@@ -416,7 +416,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         enabled?: bool, // Default: true
  *     },
  *     lock?: bool|string|array{ // Lock configuration
- *         enabled?: bool, // Default: false
+ *         enabled?: bool, // Default: true
  *         resources?: array<string, string|list<scalar|null>>,
  *     },
  *     semaphore?: bool|string|array{ // Semaphore configuration
@@ -1766,6 +1766,61 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     return_expiration?: scalar|null, // When true, the response will include the token expiration timestamp // Default: false
  *     return_expiration_parameter_name?: scalar|null, // The default response parameter name containing the refresh token expiration timestamp // Default: "refresh_token_expiration"
  * }
+ * @psalm-type TwigExtraConfig = array{
+ *     cache?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     html?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     markdown?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     intl?: bool|array{
+ *         enabled?: bool, // Default: true
+ *     },
+ *     cssinliner?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     inky?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     string?: bool|array{
+ *         enabled?: bool, // Default: false
+ *     },
+ *     commonmark?: array{
+ *         renderer?: array{ // Array of options for rendering HTML.
+ *             block_separator?: scalar|null,
+ *             inner_separator?: scalar|null,
+ *             soft_break?: scalar|null,
+ *         },
+ *         html_input?: "strip"|"allow"|"escape", // How to handle HTML input.
+ *         allow_unsafe_links?: bool, // Remove risky link and image URLs by setting this to false. // Default: true
+ *         max_nesting_level?: int, // The maximum nesting level for blocks. // Default: 9223372036854775807
+ *         max_delimiters_per_line?: int, // The maximum number of strong/emphasis delimiters per line. // Default: 9223372036854775807
+ *         slug_normalizer?: array{ // Array of options for configuring how URL-safe slugs are created.
+ *             instance?: mixed,
+ *             max_length?: int, // Default: 255
+ *             unique?: mixed,
+ *         },
+ *         commonmark?: array{ // Array of options for configuring the CommonMark core extension.
+ *             enable_em?: bool, // Default: true
+ *             enable_strong?: bool, // Default: true
+ *             use_asterisk?: bool, // Default: true
+ *             use_underscore?: bool, // Default: true
+ *             unordered_list_markers?: list<scalar|null>,
+ *         },
+ *         ...<mixed>
+ *     },
+ * }
+ * @psalm-type DhAuditorConfig = array{
+ *     enabled?: bool, // Default: true
+ *     timezone?: scalar|null, // Default: "UTC"
+ *     user_provider?: scalar|null, // Default: "dh_auditor.user_provider"
+ *     security_provider?: scalar|null, // Default: "dh_auditor.security_provider"
+ *     role_checker?: scalar|null, // Default: "dh_auditor.role_checker"
+ *     providers?: array<string, mixed>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1780,6 +1835,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *     lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *     gesdinet_jwt_refresh_token?: GesdinetJwtRefreshTokenConfig,
+ *     twig_extra?: TwigExtraConfig,
+ *     dh_auditor?: DhAuditorConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1797,6 +1854,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *         debug?: DebugConfig,
  *         gesdinet_jwt_refresh_token?: GesdinetJwtRefreshTokenConfig,
+ *         twig_extra?: TwigExtraConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1812,6 +1871,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *         gesdinet_jwt_refresh_token?: GesdinetJwtRefreshTokenConfig,
+ *         twig_extra?: TwigExtraConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1829,6 +1890,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *         gesdinet_jwt_refresh_token?: GesdinetJwtRefreshTokenConfig,
+ *         twig_extra?: TwigExtraConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
