@@ -17,6 +17,7 @@ framework:
         routing:
             # Route async messages to the async transport
             'App\Message\CleanupExpiredTokensMessage': async
+            'App\Message\CleanupOldAuditsMessage': async
 
 when@test:
     framework:

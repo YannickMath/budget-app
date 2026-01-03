@@ -76,7 +76,7 @@ services:
   scheduler:
     build: ./budget_app_api
     container_name: budget_app_scheduler
-    command: php bin/console messenger:consume scheduler_clean_expired_tokens -vv --time-limit=3600
+    command: php bin/console messenger:consume scheduler_clean_expired_tokens scheduler_clean_old_audits -vv --time-limit=3600
     depends_on:
       - db
       - redis
